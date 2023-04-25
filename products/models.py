@@ -122,7 +122,7 @@ def get_image_path(instance, filename):
     return os.path.join('images', type, f"{str(instance.product.id)}")
 
 
-class ProductImages(models.Model):
+class ProductImage(models.Model):
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     img = models.ImageField(upload_to=get_image_path)
@@ -136,7 +136,7 @@ class ProductImages(models.Model):
     def check_main(self):
         # check if other ProductImage refering the same Product is not already set as main
         if self.main == True:
-            qs = ProductImages.objects.filter(product=self.product, main=True).first()
+            qs = ProductImage.objects.filter(product=self.product, main=True).first()
             if qs is not None and qs != self:
                 raise ValidationError({'main': ValidationError("Only one main image per Product possible.")})
 
