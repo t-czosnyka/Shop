@@ -2,4 +2,18 @@
 
 {% block content %}
 
+    {% for product in products %}
+        <div class="card" style="width: 18rem;">
+               {% for image in product.images.all %}
+                    {% if image.main %}
+                        <img src="{{ image.img.url }}" class="card-img-top" alt="...">
+                    {% endif %}
+                {% endfor %}
+            <div class="card-body">
+                <h5 class="card-title">{{product.name}}</h5>
+                <p class="card-text">{{product.description}}</p>
+                <a href="#" class="btn btn-primary">See more</a>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock content %}
