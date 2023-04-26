@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, ProductShoe, Producer, Color, ProductSuit, ProductShirt, ProductImage
+from .models import Product, ProductShoe, Producer, Color, ProductSuit, ProductShirt, ProductImage, ProductMainImage
 
 # Register your models here.
 
@@ -10,6 +10,7 @@ admin.site.register(Color)
 admin.site.register(ProductSuit)
 admin.site.register(ProductShirt)
 admin.site.register(ProductImage)
+admin.site.register(ProductMainImage)
 
 class ProductAdmin(admin.ModelAdmin):
     exclude = ('main_img',)

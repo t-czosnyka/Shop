@@ -36,6 +36,7 @@ class Product(models.Model):
         return self.name
 
 
+
 class ProductSpecific(models.Model):
     # Abstract class for specific product models with different attributes,
     # Product.type must match specififc model TYPE, allows different variants certain product
@@ -50,7 +51,7 @@ class ProductSpecific(models.Model):
         abstract = True
 
     def validate_type(self):
-        # function validates if specific product type refers to correct general product
+        # function validates if specific product refers to correct general product of correct type
         if self.product.type != self.TYPE:
             raise ValidationError({
                 'product': ValidationError(f" {self.product.get_type_display()} is wrong product type for"
@@ -127,32 +128,49 @@ class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     img = models.ImageField(upload_to=get_image_path)
     description = models.TextField()
-    #Image is main image to represent product - only one possible
-    main = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.product.name} {self.id}"
+        return f"{self.product.id}-{self.product.name} {self.id}"
 
-    def check_main(self):
-        # check if other ProductImage refering the same Product is not already set as main
-        if self.main == True:
-            qs = ProductImage.objects.filter(product=self.product, main=True).first()
-            if qs is not None and qs != self:
-                raise ValidationError({'main': ValidationError("Only one main image per Product possible.")})
-
-    def clean(self):
-        super().clean()
-        self.check_main()
 
     def save(self, **kwargs):
-        self.check_main()
         super().save(**kwargs)
+        # Rename image file as "{Product.id}_{ProductImage.id}",
+        # ProductImage.id available only after saving to DB
         img_path = str(self.img)
         head, tail = os.path.split(img_path)
         new_img_path = os.path.join(head,f"{self.product.id}_{self.id}")
         os.rename(img_path, new_img_path)
         self.img = new_img_path
         super().save(**kwargs)
+
+
+class ProductMainImage(models.Model):
+    # junction table linking product to its main image, checking if ProductImage refers to correct Product
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, primary_key=True, related_name='main_img')
+    main_img = models.OneToOneField(ProductImage, on_delete=models.SET_NULL, null=True)
+
+    def check_relation(self):
+        if self.main_img is not None and self.main_img.product != self.product:
+            raise ValidationError("Selected ProductImage does not belong to this Product.")
+    def clean(self):
+        self.check_relation()
+        super().clean()
+
+    def save(self, **kwargs):
+        self.check_relation()
+        super().save(**kwargs)
+
+    def __str__(self):
+        img = ''
+        if self.main_img is not None:
+            img = self.main_img.id
+        return f"{self.product.name}-{self.product.id} Main image:{img}"
+
+
+
+
+
 
 
 
