@@ -9,8 +9,10 @@ admin.site.register(ProductShoe)
 admin.site.register(Color)
 admin.site.register(ProductSuit)
 admin.site.register(ProductShirt)
-admin.site.register(ProductImage)
 admin.site.register(ProductMainImage)
 
-class ProductAdmin(admin.ModelAdmin):
-    exclude = ('main_img',)
+
+class ProductImageAdmin(admin.ModelAdmin):
+    exclude = ('thumbnail',)
+
+admin.site.register(ProductImage, ProductImageAdmin)

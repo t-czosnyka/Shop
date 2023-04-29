@@ -5,17 +5,7 @@
     {% for page in paginator %}
         <tr>
             {% for product in page.object_list %}
-                <td>
-                    <div class="card m-2 " style="width: 18rem;">
-                        {% if product.main_img.main_img.img.url %}
-                        <img src="{{ product.main_img.main_img.img.url }}" class="card-img-top" alt="Main Image">
-                        {% endif %}
-                        <div class="card-body">
-                            <h5 class="card-title">{{product.name}}</h5>
-                            <p class="card-text">{{product.description}}</p>
-                        </div>
-                    </div>
-                </td>
+                {% include 'product_card.html' %}
             {% endfor %}
         </tr>
     {% endfor %}

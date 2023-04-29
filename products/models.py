@@ -1,6 +1,10 @@
+import functools
+import operator
 from django.db import models
 from django.core.exceptions import ValidationError
-import os
+import os, pathlib
+from PIL import Image
+from django.db.models import Q
 
 # Create your models here.
 # Available product types
@@ -32,15 +36,75 @@ class Product(models.Model):
     type = models.CharField(choices=TYPE_CHOICES, max_length=3)
     promoted = models.BooleanField(default=False)
 
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.assign_main_img()
+        self.assign_product_variants()
+
     def __str__(self):
         return self.name
 
+    def assign_main_img(self):
+        # assigns main_img_short attribute to Product object from ProducMainImage if present or first available image
+        if self.main_img is not None and self.main_img.main_img is not None:
+            self.main_img_short= ProductImage.objects.get(id = self.main_img.main_img.id)
+        else:
+            self.main_img_short= ProductImage.objects.filter(product=self).first()
+
+    def assign_product_variants(self):
+        self.variants = self.__getattribute__(f"product{self.get_type_display().lower()}_set")
+
+    def get_specific_product_variants(self, query_dict):
+        attributes = {}
+        variant_object = self.variants.first()
+        if variant_object is None:
+            return attributes
+        variant_field_names = variant_object.get_variant_field_names()
+        filtered = self.get_specific_products(query_dict)
+        for field_name in variant_field_names:
+            attributes[field_name] = set()
+        variant_field_objects = variant_object.get_variant_field_objects()
+        for variant in filtered:
+            for field in variant_field_objects:
+                attributes[field.name].add(field.value_to_string(variant))
+        return attributes
+
+    def get_specific_products(self, query_dict):
+        variant_object = self.variants.first()
+        variant_field_names = variant_object.get_variant_field_names()
+        # Create list of queries,
+        q_list = [Q(product=self.id)]
+        # Append queries form GET request to q_List
+        for key, val in query_dict.items():
+            if key in variant_field_names and val:
+                q_list.append(Q(**{f"{key}": val}))
+        # filter Product with passed queries
+        try:
+            filtered = self.variants.filter(functools.reduce(operator.and_, q_list))
+        except ValueError as e:
+            print(e)
+            return {}
+        else:
+            return filtered
+
+    def add_to_cart(self, query_dict):
+        # check if all values are not empty
+        for key, val in query_dict.items():
+            if not val:
+                print("empty values")
+                return {}
+        filtered = self.get_specific_products(query_dict)
+        if len(filtered)== 1:
+            return filtered.first()
+        else:
+            return {}
 
 
 class ProductSpecific(models.Model):
     # Abstract class for specific product models with different attributes,
     # Product.type must match specififc model TYPE, allows different variants certain product
     TYPE = None
+    variant_field_names = []
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     available = models.BooleanField()
@@ -67,6 +131,15 @@ class ProductSpecific(models.Model):
         self.validate_type()
         super().save(**kwargs)
 
+    def get_variant_field_objects(self):
+        variant_field_objects = []
+        for field in self._meta.get_fields():
+            if field.name in self.variant_field_names:
+                variant_field_objects.append(field)
+        return variant_field_objects
+
+    def get_variant_field_names(self):
+        return self.variant_field_names
 
 class Color(models.Model):
     name = models.CharField(max_length=20, unique=True)
@@ -78,7 +151,7 @@ class Color(models.Model):
 class ProductShoe(ProductSpecific):
     # Product type
     TYPE = '1'
-
+    variant_field_names = ['size', 'color']
     size = models.DecimalField(max_digits=2, decimal_places=0)
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
 
@@ -92,7 +165,7 @@ class ProductShoe(ProductSpecific):
 class ProductSuit(ProductSpecific):
     # Product type
     TYPE = '2'
-
+    variant_field_names = ['height_cm', 'chest_cm', 'waist_cm', 'color']
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     height_cm = models.DecimalField(max_digits=3, decimal_places=0)
     chest_cm = models.DecimalField(max_digits=3, decimal_places=0)
@@ -107,7 +180,7 @@ class ProductSuit(ProductSpecific):
 
 class ProductShirt(ProductSpecific):
     TYPE = '3'
-
+    variant_field_names = ['height_cm', 'collar_cm', 'color']
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     height_cm = models.DecimalField(max_digits=3, decimal_places=0)
     collar_cm = models.DecimalField(max_digits=3, decimal_places=0)
@@ -120,13 +193,20 @@ class ProductShirt(ProductSpecific):
 
 def get_image_path(instance, filename):
     type = instance.product.get_type_display()
-    return os.path.join('images', type, f"{str(instance.product.id)}")
+    file_extension = pathlib.Path(filename).suffix
+    return os.path.join('images', type, f"{str(instance.product.id)}{file_extension}")
+
+def get_thumbnail_path(instance, filename):
+    type = instance.product.get_type_display()
+    file_extension = pathlib.Path(filename).suffix
+    return os.path.join('images', type, f"{str(instance.product.id)}_thumbnail{file_extension}")
 
 
 class ProductImage(models.Model):
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     img = models.ImageField(upload_to=get_image_path)
+    thumbnail = models.ImageField(upload_to=get_thumbnail_path)
     description = models.TextField()
 
     def __str__(self):
@@ -138,10 +218,21 @@ class ProductImage(models.Model):
         # Rename image file as "{Product.id}_{ProductImage.id}",
         # ProductImage.id available only after saving to DB
         img_path = str(self.img)
+        file_extension = pathlib.Path(img_path).suffix
         head, tail = os.path.split(img_path)
-        new_img_path = os.path.join(head,f"{self.product.id}_{self.id}")
+        new_img_path = os.path.join(head,f"{self.product.id}_{self.id}{file_extension}")
         os.rename(img_path, new_img_path)
         self.img = new_img_path
+
+        # Resize uploaded image and save
+        image = Image.open(self.img)
+        image.thumbnail((600, 600))
+        image.save(new_img_path)
+        # Create a thumbnail from uploaded image and assign it to thumbnail field
+        image.thumbnail((100, 100))
+        thumbnail_path = os.path.join(head,f"{self.product.id}_{self.id}_thumbnail{file_extension}")
+        image.save(thumbnail_path)
+        self.thumbnail = thumbnail_path
         super().save(**kwargs)
 
 

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <div class="card mt-5">
+      <h5 class="card-header">{{product.name}}</h5>
+      <div class="card-body" id ="card">
+        <!-- Big Image -->
+        <img class="my-2" id='currentImg' src="{{ product.main_img_short.img.url }}" class="img-fluid" alt="Picture">
+        <h5 class="card-title">$ {{product.price}} </h5>
+        <!-- Thumbnails -->
+        {% for image in images %}
+          {% if image.thumbnail %}
+          <img id="thumbnail_{{image.id}}" src="{{image.thumbnail.url}}"
+               {% if image.id == product.main_img_short.id %}
+               class="img-thumbnail main-thumbnail"
+               {% else %}
+               class="img-thumbnail"
+               {% endif %}
+               alt="..."
+               onclick="showImage('{{image.img.url}}','','thumbnail_{{image.id}}');">
+          {% endif %}
+        {% endfor %}
+        <!-- Variants -->
+        <form method="GET" id="form">
+          {% for key, values in attributes.items %}
+            <label for="{{key}}" class="form-label">{{key}}:</label>
+            <select class="form-select" name="{{key}}" id="{{key}}"onchange="this.form.submit()">
+              <option value="">No selection</option>
+              {% for value in values %}
+                {% if value in request.GET.values %}
+                <option value="{{value}}" selected>{{value}}</option>
+                {% else %}
+                <option value="{{value}}">{{value}}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          <br>
+          {% endfor %}
+          {% if attributes %}
+          <button class="btn btn-primary" type="button" onclick="addCart()">Add to cart</button>
+          <br><br>
+          {% endif %}
+        </form>
+
+        <!-- Naviagtion -->
+        <p class="card-text">{{product.description}}</p>
+        <a href="#" class="btn btn-primary">Go somewhere</a>
+        <a href="{% url 'pages:home' %}" class="btn btn-secondary">Go back</a>
+      </div>
+    </div>
+<script type="text/javascript">
+
+function showImage(imgPath, imgText, thumbClicked) {
+    var curImage = document.getElementById('currentImg');
+    var thumb = document.getElementById(thumbClicked);
+    var all_thumbs = document.getElementById("card").getElementsByClassName("img-thumbnail");
+    for (let i = 0; i < all_thumbs.length; i++) {
+        all_thumbs[i].classList.remove('border');
+        all_thumbs[i].classList.remove('border-info');
+    }
+    thumb.classList.add('border');
+    thumb.classList.add('border-info');
+    curImage.src = imgPath;
+ }
+
+</script>
+
+<script type="text/javascript">
+document.addEventListener("DOMContentLoaded", () => {
+  var mainThumb = document.getElementById("card").getElementsByClassName("main-thumbnail");
+  if (mainThumb.length >0) {
+    mainThumb[0].classList.add('border');
+    mainThumb[0].classList.add('border-info');
+    }
+});
+</script>
+
+<script type="text/javascript">
+function addCart(){
+  var form = document.getElementById('form');
+  const hiddenField = document.createElement('input');
+  hiddenField.type = 'hidden';
+  hiddenField.name = 'cart';
+  hiddenField.value = '1';
+  form.appendChild(hiddenField);
+  document.body.appendChild(form);
+  form.submit()
+}
+</script>
+
+
+{% endblock %}
