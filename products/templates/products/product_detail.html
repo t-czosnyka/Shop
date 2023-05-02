@@ -21,23 +21,26 @@
                onclick="showImage('{{image.img.url}}','','thumbnail_{{image.id}}');">
           {% endif %}
         {% endfor %}
-        <!-- Variants -->
+        <!-- Specific attributes -->
+        <!-- Form created based on attributes of available specific products, submitted every time attribute value is
+         changed, showing available products with selected attributes -->
         <form method="GET" id="form">
-          {% for key, values in attributes.items %}
+          {% for key, values in specific_attributes.items %}
             <label for="{{key}}" class="form-label">{{key}}:</label>
-            <select class="form-select" name="{{key}}" id="{{key}}"onchange="this.form.submit()">
+            <select class="form-select" name="{{key}}" id="{{key}}" onchange="this.form.submit()">
               <option value="">No selection</option>
               {% for value in values %}
-                {% if value in request.GET.values %}
-                <option value="{{value}}" selected>{{value}}</option>
+                {% if value.value in request.GET.values %}
+                <option value="{{value.value}}" selected>{{value.display}}</option>
                 {% else %}
-                <option value="{{value}}">{{value}}</option>
+                <option value="{{value.value}}">{{value.display}}</option>
                 {% endif %}
               {% endfor %}
             </select>
           <br>
           {% endfor %}
-          {% if attributes %}
+         <!-- Add to cart button - showed when there are available products with selected attributes -->
+          {% if specific_attributes %}
           <button class="btn btn-primary" type="button" onclick="addCart()">Add to cart</button>
           <br><br>
           {% endif %}

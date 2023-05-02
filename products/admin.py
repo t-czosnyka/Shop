@@ -6,10 +6,10 @@ from .models import Product, ProductShoe, Producer, Color, ProductSuit, ProductS
 admin.site.register(Product)
 admin.site.register(Producer)
 admin.site.register(ProductShoe)
-admin.site.register(Color)
 admin.site.register(ProductSuit)
 admin.site.register(ProductShirt)
 admin.site.register(ProductMainImage)
+admin.site.register(Color)
 
 
 class ProductImageAdmin(admin.ModelAdmin):

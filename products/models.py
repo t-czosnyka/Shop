@@ -36,11 +36,6 @@ class Product(models.Model):
     type = models.CharField(choices=TYPE_CHOICES, max_length=3)
     promoted = models.BooleanField(default=False)
 
-    def __init__(self,*args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.assign_main_img()
-        self.assign_product_variants()
-
     def __str__(self):
         return self.name
 
@@ -51,38 +46,52 @@ class Product(models.Model):
         else:
             self.main_img_short= ProductImage.objects.filter(product=self).first()
 
-    def assign_product_variants(self):
-        self.variants = self.__getattribute__(f"product{self.get_type_display().lower()}_set")
-
-    def get_specific_product_variants(self, query_dict):
+    def get_specific_product_attributes(self, query_dict):
+        # function returns dictionary with specific product attributes and available values of this attributes based
+        # on ProductSpecific objects referring to this Product object e.g. {'size': [42,43], 'color':['Black','White']}
         attributes = {}
-        variant_object = self.variants.first()
-        if variant_object is None:
-            return attributes
+        # Get queryset of specific products referring this Product class
+        variants = self.__getattribute__(f"product{self.get_type_display().lower()}_set")
+        variant_object = variants.first()
         variant_field_names = variant_object.get_variant_field_names()
+        # Return empty dict if there are no ProductSpecific objects referring to this Product object
+        if len(variants.all()) == 0:
+            return attributes
+        # Filter ProductSpecific objects matching query dict
         filtered = self.get_specific_products(query_dict)
+        used_values = {}
         for field_name in variant_field_names:
-            attributes[field_name] = set()
+            attributes[field_name] = []
+            used_values[field_name] = set()
         variant_field_objects = variant_object.get_variant_field_objects()
         for variant in filtered:
             for field in variant_field_objects:
-                attributes[field.name].add(field.value_to_string(variant))
+                # Check if field object is a Foreign Key
+                value = field.value_to_string(variant)
+                if isinstance(field, models.ForeignKey):
+                    display = getattr(variant, f'{field.name}')
+                else:
+                    display = field.value_to_string(variant)
+                if value not in used_values[field.name]:
+                    used_values[field.name].add(value)
+                    attributes[field.name].append({'value': value, 'display': display})
         return attributes
 
     def get_specific_products(self, query_dict):
-        variant_object = self.variants.first()
+        # Returns QuerySet of products with matching attributes
+        # Create list of queries
+        variants = self.__getattribute__(f"product{self.get_type_display().lower()}_set")
+        variant_object = variants.first()
         variant_field_names = variant_object.get_variant_field_names()
-        # Create list of queries,
-        q_list = [Q(product=self.id)]
-        # Append queries form GET request to q_List
+        q_list = [Q(product=self.id), Q(available=True)]
+        # Append queries from query_dict to q_List
         for key, val in query_dict.items():
             if key in variant_field_names and val:
                 q_list.append(Q(**{f"{key}": val}))
         # filter Product with passed queries
         try:
-            filtered = self.variants.filter(functools.reduce(operator.and_, q_list))
+            filtered = variants.filter(functools.reduce(operator.and_, q_list))
         except ValueError as e:
-            print(e)
             return {}
         else:
             return filtered
@@ -94,7 +103,7 @@ class Product(models.Model):
                 print("empty values")
                 return {}
         filtered = self.get_specific_products(query_dict)
-        if len(filtered)== 1:
+        if len(filtered) == 1:
             return filtered.first()
         else:
             return {}
@@ -138,8 +147,10 @@ class ProductSpecific(models.Model):
                 variant_field_objects.append(field)
         return variant_field_objects
 
-    def get_variant_field_names(self):
-        return self.variant_field_names
+    @classmethod
+    def get_variant_field_names(cls):
+        return cls.variant_field_names
+
 
 class Color(models.Model):
     name = models.CharField(max_length=20, unique=True)

@@ -12,8 +12,8 @@ def product_detail_view(request, pk):
             specific_product = product.add_to_cart(request.GET)
             print(specific_product)
             return redirect('products:detail', pk=pk)
-        #
-        attributes = product.get_specific_product_variants(request.GET)
+        # get specific product attributes matching requested criteria
+        specific_attributes = product.get_specific_product_attributes(request.GET)
         # get queryset of images referring this product with its main img as the first one
         if product.main_img is not None and product.main_img.main_img is not None:
             main_img_id = product.main_img.main_img.id
@@ -26,6 +26,6 @@ def product_detail_view(request, pk):
         context = {
             'product': product,
             'images': images,
-            'attributes': attributes,
+            'specific_attributes': specific_attributes,
                    }
         return render(request, 'products/product_detail.html', context)
