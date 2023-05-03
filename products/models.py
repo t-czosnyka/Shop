@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 import os, pathlib
 from PIL import Image
 from django.db.models import Q
-from django.apps import apps
+from django.conf import settings
 
 # Create your models here.
 # Available product types
@@ -41,7 +41,7 @@ class Product(models.Model):
         return self.name
 
     def assign_main_img(self):
-        # assigns main_img_short attribute to Product object from ProducMainImage if present or first available image
+        # assigns main_img_short attribute to Product object from ProductMainImage if present or first available image
         if self.main_img is not None and self.main_img.main_img is not None:
             self.main_img_short= ProductImage.objects.get(id = self.main_img.main_img.id)
         else:
@@ -112,9 +112,7 @@ class Product(models.Model):
         # filter ProductSpecific objects with queries from q_list
         try:
             filtered = product_specific_model.objects.filter(functools.reduce(operator.and_, q_list))
-        except ValidationError:
-            filtered = {}
-        except ValueError:
+        except (ValidationError, ValueError):
             filtered = {}
         return filtered
 
@@ -253,20 +251,21 @@ class ProductImage(models.Model):
         # Rename image file as "{Product.id}_{ProductImage.id}",
         # ProductImage.id available only after saving to DB
         img_path = str(self.img)
+        print(img_path)
         file_extension = pathlib.Path(img_path).suffix
         head, tail = os.path.split(img_path)
-        new_img_path = os.path.join(head,f"{self.product.id}_{self.id}{file_extension}")
-        os.rename(img_path, new_img_path)
+        new_img_path = os.path.join(head, f"{self.product.id}_{self.id}{file_extension}")
+        os.rename(os.path.join(settings.MEDIA_ROOT, img_path), os.path.join(settings.MEDIA_ROOT, new_img_path))
         self.img = new_img_path
 
         # Resize uploaded image and save
         image = Image.open(self.img)
         image.thumbnail((600, 600))
-        image.save(new_img_path)
+        image.save(os.path.join(settings.MEDIA_ROOT, new_img_path))
         # Create a thumbnail from uploaded image and assign it to thumbnail field
         image.thumbnail((100, 100))
-        thumbnail_path = os.path.join(head,f"{self.product.id}_{self.id}_thumbnail{file_extension}")
-        image.save(thumbnail_path)
+        thumbnail_path = os.path.join(head, f"{self.product.id}_{self.id}_thumbnail{file_extension}")
+        image.save(os.path.join(settings.MEDIA_ROOT, thumbnail_path))
         self.thumbnail = thumbnail_path
         super().save(**kwargs)
 

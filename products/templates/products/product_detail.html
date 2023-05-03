@@ -43,8 +43,10 @@
           {% if specific_attributes %}
           <button class="btn btn-primary" type="button" onclick="addCart()">Add to cart</button>
           {% endif %}
+          {% if request.GET %}
           <a href="{{request.path}}"><button class="btn btn-secondary" type="button">Reset selections</button></a>
-          <br><br>
+          {% endif %}
+          <br>
         </form>
 
         <!-- Naviagtion -->

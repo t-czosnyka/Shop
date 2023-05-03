@@ -6,6 +6,8 @@ from django.core.paginator import Paginator
 def home_view(request):
     Product = apps.get_model('products', 'Product')
     products = Product.objects.all()
+    for product in products:
+        product.assign_main_img()
     paginator = Paginator(products, 3)
 
     context = {'products': products, 'paginator': paginator}

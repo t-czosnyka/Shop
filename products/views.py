@@ -7,6 +7,7 @@ from django.contrib import messages
 def product_detail_view(request, pk):
     if request.method == 'GET':
         product = Product.objects.get(pk=pk)
+        product.assign_main_img()
         # Add specific product to cart and reload the page
         if request.GET.get('cart', False):
             print('Add to cart')
