@@ -25,12 +25,12 @@
         <!-- Form created based on attributes of available specific products, submitted every time attribute value is
          changed, showing available products with selected attributes -->
         <form method="GET" id="form">
-          {% for key, values in specific_attributes.items %}
-            <label for="{{key}}" class="form-label">{{key}}:</label>
-            <select class="form-select" name="{{key}}" id="{{key}}" onchange="this.form.submit()">
+          {% for attribute, values in specific_attributes.items %}
+            <label for="{{attribute}}" class="form-label">{{attribute}}:</label>
+            <select class="form-select" name="{{attribute}}" id="{{attribute}}" onchange="this.form.submit()">
               <option value="">No selection</option>
               {% for value in values %}
-                {% if value.value in request.GET.values %}
+                {% if value.selected %}
                 <option value="{{value.value}}" selected>{{value.display}}</option>
                 {% else %}
                 <option value="{{value.value}}">{{value.display}}</option>

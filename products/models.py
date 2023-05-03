@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 import os, pathlib
 from PIL import Image
 from django.db.models import Q
+from django.apps import apps
 
 # Create your models here.
 # Available product types
@@ -46,63 +47,84 @@ class Product(models.Model):
         else:
             self.main_img_short= ProductImage.objects.filter(product=self).first()
 
-    def get_specific_product_attributes(self, query_dict):
-        # function returns dictionary with specific product attributes and available values of this attributes based
-        # on ProductSpecific objects referring to this Product object e.g. {'size': [42,43], 'color':['Black','White']}
-        attributes = {}
-        # Get queryset of specific products referring this Product class
-        variants = self.__getattribute__(f"product{self.get_type_display().lower()}_set")
-        variant_object = variants.first()
-        variant_field_names = variant_object.get_variant_field_names()
-        # Return empty dict if there are no ProductSpecific objects referring to this Product object
-        if len(variants.all()) == 0:
-            return attributes
+    def get_filtered_product_specific_attributes(self, query_dict):
+        # method returns dictionary with attributes of ProductSpecific objects referring this Product and
+        # available values of these attributes. Keys are attribute names and values are list of dicts containing:
+        # actual value, how value ist displayed in form, and information if it was selected in query_dict.
+        # e.g.
+        # product_specific_attributes = {'size': [
+        #                                           {value:'42', display:'42', selected = False}
+        #                                           {value:'43', display:'43', selected = True}
+        #                                         ],
+        #                               'color':[
+        #                                           {value:'1', display:'Black', selected = False}
+        #                                           {value:'2', display:'White', selected = False}
+        #                                        ]}
+        #
+        product_specific_attributes = {}
+        # get Product specific model referring to this product based on Product.type - ProductSpecific model must
+        # match the naming pattern: "ProductType"
+        product_specific_model = globals().get(f"Product{self.get_type_display()}", None)
+        # return empty dict if product specific model is not found
+        if product_specific_model is None:
+            return product_specific_attributes
         # Filter ProductSpecific objects matching query dict
-        filtered = self.get_specific_products(query_dict)
+        filtered_products_specific = self.get_filtered_product_specific(query_dict)
+        if len(filtered_products_specific) == 0:
+            return product_specific_attributes
+        # Create dict based on result of filtering product_specific
         used_values = {}
-        for field_name in variant_field_names:
-            attributes[field_name] = []
-            used_values[field_name] = set()
-        variant_field_objects = variant_object.get_variant_field_objects()
-        for variant in filtered:
-            for field in variant_field_objects:
+        attribute_field_names = product_specific_model.get_attribute_field_names()
+        # prepare keys of result dict
+        for attribute in attribute_field_names:
+            product_specific_attributes[attribute] = []
+            # keep track of added values to remove duplicates
+            used_values[attribute] = set()
+        # get attribute field objects of ProductSpecific class
+        attribute_field_objects = product_specific_model.get_attribute_field_objects()
+        # add values of all fields to result dict for every product
+        for product_specific in filtered_products_specific:
+            for field in attribute_field_objects:
                 # Check if field object is a Foreign Key
-                value = field.value_to_string(variant)
+                value = field.value_to_string(product_specific)
+                # If field is a Foreign key field get object display
                 if isinstance(field, models.ForeignKey):
-                    display = getattr(variant, f'{field.name}')
+                    display = getattr(product_specific, f'{field.name}')
                 else:
-                    display = field.value_to_string(variant)
+                    display = value
                 if value not in used_values[field.name]:
                     used_values[field.name].add(value)
-                    attributes[field.name].append({'value': value, 'display': display})
-        return attributes
+                    selected = query_dict.get(field.name, False) == value
+                    product_specific_attributes[field.name].append({'value': value, 'display': display,
+                                                                    'selected': selected})
+        return product_specific_attributes
 
-    def get_specific_products(self, query_dict):
-        # Returns QuerySet of products with matching attributes
-        # Create list of queries
-        variants = self.__getattribute__(f"product{self.get_type_display().lower()}_set")
-        variant_object = variants.first()
-        variant_field_names = variant_object.get_variant_field_names()
+    def get_filtered_product_specific(self, query_dict):
+        # Returns QuerySet of product specific objects matching query dict
+        product_specific_model = globals().get(f"Product{self.get_type_display()}", False)
+        attribute_field_names = product_specific_model.get_attribute_field_names()
+        # Create list of queries initialized with
         q_list = [Q(product=self.id), Q(available=True)]
-        # Append queries from query_dict to q_List
+        # Append queries from query_dict to q_list
         for key, val in query_dict.items():
-            if key in variant_field_names and val:
+            if key in attribute_field_names and val:
                 q_list.append(Q(**{f"{key}": val}))
-        # filter Product with passed queries
+        # filter ProductSpecific objects with queries from q_list
         try:
-            filtered = variants.filter(functools.reduce(operator.and_, q_list))
-        except ValueError as e:
-            return {}
-        else:
-            return filtered
+            filtered = product_specific_model.objects.filter(functools.reduce(operator.and_, q_list))
+        except ValidationError:
+            filtered = {}
+        return filtered
 
     def add_to_cart(self, query_dict):
+        #
         # check if all values are not empty
         for key, val in query_dict.items():
             if not val:
-                print("empty values")
                 return {}
-        filtered = self.get_specific_products(query_dict)
+        # filter products with passed query_dict
+        filtered = self.get_filtered_product_specific(query_dict)
+        # if only one result is available return ProductSpecific object
         if len(filtered) == 1:
             return filtered.first()
         else:
@@ -113,14 +135,12 @@ class ProductSpecific(models.Model):
     # Abstract class for specific product models with different attributes,
     # Product.type must match specififc model TYPE, allows different variants certain product
     TYPE = None
-    variant_field_names = []
-
+    attribute_field_names = []
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     available = models.BooleanField()
     added = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-
         abstract = True
 
     def validate_type(self):
@@ -140,16 +160,17 @@ class ProductSpecific(models.Model):
         self.validate_type()
         super().save(**kwargs)
 
-    def get_variant_field_objects(self):
-        variant_field_objects = []
-        for field in self._meta.get_fields():
-            if field.name in self.variant_field_names:
-                variant_field_objects.append(field)
-        return variant_field_objects
+    @classmethod
+    def get_attribute_field_objects(cls):
+        attribute_field_objects = []
+        for field in cls._meta.get_fields():
+            if field.name in cls.attribute_field_names:
+                attribute_field_objects.append(field)
+        return attribute_field_objects
 
     @classmethod
-    def get_variant_field_names(cls):
-        return cls.variant_field_names
+    def get_attribute_field_names(cls):
+        return cls.attribute_field_names
 
 
 class Color(models.Model):
@@ -158,11 +179,12 @@ class Color(models.Model):
     def __str__(self):
         return self.name
 
+# Classes inheriting from ProductSpecific must match naming pattern Product<Product.type>
 
 class ProductShoe(ProductSpecific):
     # Product type
     TYPE = '1'
-    variant_field_names = ['size', 'color']
+    attribute_field_names = ['size', 'color']
     size = models.DecimalField(max_digits=2, decimal_places=0)
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
 
@@ -176,7 +198,7 @@ class ProductShoe(ProductSpecific):
 class ProductSuit(ProductSpecific):
     # Product type
     TYPE = '2'
-    variant_field_names = ['height_cm', 'chest_cm', 'waist_cm', 'color']
+    attribute_field_names = ['height_cm', 'chest_cm', 'waist_cm', 'color']
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     height_cm = models.DecimalField(max_digits=3, decimal_places=0)
     chest_cm = models.DecimalField(max_digits=3, decimal_places=0)
@@ -191,7 +213,7 @@ class ProductSuit(ProductSpecific):
 
 class ProductShirt(ProductSpecific):
     TYPE = '3'
-    variant_field_names = ['height_cm', 'collar_cm', 'color']
+    attribute_field_names = ['height_cm', 'collar_cm', 'color']
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     height_cm = models.DecimalField(max_digits=3, decimal_places=0)
     collar_cm = models.DecimalField(max_digits=3, decimal_places=0)
@@ -255,6 +277,7 @@ class ProductMainImage(models.Model):
     def check_relation(self):
         if self.main_img is not None and self.main_img.product != self.product:
             raise ValidationError("Selected ProductImage does not belong to this Product.")
+
     def clean(self):
         self.check_relation()
         super().clean()
