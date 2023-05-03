@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Product, ProductImage
-fro
+from django.contrib import messages
 # Create your views here.
 
 
@@ -10,12 +10,14 @@ def product_detail_view(request, pk):
         # Add specific product to cart and reload the page
         if request.GET.get('cart', False):
             print('Add to cart')
-            specific_product = product.add_to_cart(request.GET)
-            print(specific_product)
+            result, specific_product = product.add_to_cart(request.GET)
+            if result:
+                messages.success(request, f'Product {specific_product}  added to cart.')
+            else:
+                messages.warning(request, f'Wrong product parameters.')
             return redirect('products:detail', pk=pk)
         # get product variants filtered based on GET request parameters
         specific_attributes = product.get_filtered_product_specific_attributes(request.GET)
-        print(specific_attributes)
         # get queryset of images referring this product with its main img as the first one
         if product.main_img is not None and product.main_img.main_img is not None:
             main_img_id = product.main_img.main_img.id

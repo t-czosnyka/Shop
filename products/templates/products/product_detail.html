@@ -42,14 +42,14 @@
          <!-- Add to cart button - showed when there are available products with selected attributes -->
           {% if specific_attributes %}
           <button class="btn btn-primary" type="button" onclick="addCart()">Add to cart</button>
-          <br><br>
           {% endif %}
+          <a href="{{request.path}}"><button class="btn btn-secondary" type="button">Reset selections</button></a>
+          <br><br>
         </form>
 
         <!-- Naviagtion -->
         <p class="card-text">{{product.description}}</p>
-        <a href="#" class="btn btn-primary">Go somewhere</a>
-        <a href="{% url 'pages:home' %}" class="btn btn-secondary">Go back</a>
+        <a href="{% url 'pages:home' %}" class="btn btn-secondary">Home</a>
       </div>
     </div>
 <script type="text/javascript">

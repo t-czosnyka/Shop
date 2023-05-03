@@ -114,6 +114,8 @@ class Product(models.Model):
             filtered = product_specific_model.objects.filter(functools.reduce(operator.and_, q_list))
         except ValidationError:
             filtered = {}
+        except ValueError:
+            filtered = {}
         return filtered
 
     def add_to_cart(self, query_dict):
@@ -121,14 +123,14 @@ class Product(models.Model):
         # check if all values are not empty
         for key, val in query_dict.items():
             if not val:
-                return {}
+                return False, {}
         # filter products with passed query_dict
         filtered = self.get_filtered_product_specific(query_dict)
         # if only one result is available return ProductSpecific object
         if len(filtered) == 1:
-            return filtered.first()
+            return True, filtered.first()
         else:
-            return {}
+            return False, {}
 
 
 class ProductSpecific(models.Model):
