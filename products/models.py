@@ -43,9 +43,9 @@ class Product(models.Model):
     def assign_main_img(self):
         # assigns main_img_short attribute to Product object from ProductMainImage if present or first available image
         if self.main_img is not None and self.main_img.main_img is not None:
-            self.main_img_short= ProductImage.objects.get(id = self.main_img.main_img.id)
+            self.main_img_short = ProductImage.objects.get(id=self.main_img.main_img.id)
         else:
-            self.main_img_short= ProductImage.objects.filter(product=self).first()
+            self.main_img_short = ProductImage.objects.filter(product=self).first()
 
     def get_filtered_product_specific_attributes(self, query_dict):
         # method returns dictionary with attributes of ProductSpecific objects referring this Product and
@@ -116,19 +116,29 @@ class Product(models.Model):
             filtered = {}
         return filtered
 
-    def add_to_cart(self, query_dict):
+    def check_product_specific(self, query_dict):
         #
         # check if all values are not empty
         for key, val in query_dict.items():
             if not val:
-                return False, {}
+                return {}
         # filter products with passed query_dict
         filtered = self.get_filtered_product_specific(query_dict)
         # if only one result is available return ProductSpecific object
         if len(filtered) == 1:
-            return True, filtered.first()
+            return filtered.first()
         else:
-            return False, {}
+            return {}
+
+    def get_product_specific_by_full_id(self, id):
+        product_specific_model = globals().get(f"Product{self.get_type_display()}", None)
+        return product_specific_model.objects.get(id=id)
+
+    @classmethod
+    def get_product_specific(cls, p_id, ps_id):
+        prod = cls.objects.get(id=p_id)
+        if prod is not None:
+            return prod.get_product_specific_by_full_id(ps_id)
 
 
 class ProductSpecific(models.Model):
@@ -171,6 +181,11 @@ class ProductSpecific(models.Model):
     @classmethod
     def get_attribute_field_names(cls):
         return cls.attribute_field_names
+
+    def get_full_id(self):
+        # return tuple containing referred general Product.id,ProductSpecifc.id
+        return f"{self.product.id}_{self.id}"
+
 
 
 class Color(models.Model):

@@ -6,7 +6,12 @@
       <h5 class="card-header">{{product.name}}</h5>
       <div class="card-body" id ="card">
         <!-- Big Image -->
-        <img class="my-2" id='currentImg' src="{{ product.main_img_short.img.url }}" class="img-fluid" alt="Picture">
+        {% if product.main_img_short.img.url %}
+        <figure>
+          <img class="my-2" id='currentImg' src="{{ product.main_img_short.img.url }}" class="img-fluid" alt="Picture">
+          <figcaption id='currentText'>{{ product.main_img_short.description }}</figcaption>
+        </figure>
+        {% endif %}
         <h5 class="card-title">$ {{product.price}} </h5>
         <!-- Thumbnails -->
         {% for image in images %}
@@ -18,7 +23,7 @@
                class="img-thumbnail"
                {% endif %}
                alt="..."
-               onclick="showImage('{{image.img.url}}','','thumbnail_{{image.id}}');">
+               onclick="showImage('{{image.img.url}}','{{image.description}}','thumbnail_{{image.id}}');">
           {% endif %}
         {% endfor %}
         <!-- Specific attributes -->
@@ -58,6 +63,7 @@
 
 function showImage(imgPath, imgText, thumbClicked) {
     var curImage = document.getElementById('currentImg');
+    var curText = document.getElementById('currentText');
     var thumb = document.getElementById(thumbClicked);
     var all_thumbs = document.getElementById("card").getElementsByClassName("img-thumbnail");
     for (let i = 0; i < all_thumbs.length; i++) {
@@ -67,6 +73,7 @@ function showImage(imgPath, imgText, thumbClicked) {
     thumb.classList.add('border');
     thumb.classList.add('border-info');
     curImage.src = imgPath;
+    curText.innerText
  }
 
 </script>
@@ -86,7 +93,7 @@ function addCart(){
   var form = document.getElementById('form');
   const hiddenField = document.createElement('input');
   hiddenField.type = 'hidden';
-  hiddenField.name = 'cart';
+  hiddenField.name = 'add_cart';
   hiddenField.value = '1';
   form.appendChild(hiddenField);
   document.body.appendChild(form);

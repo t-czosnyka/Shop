@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Cart</h1>
+    {% if cart_products %}
+    <ul class="list-group">
+        {% for object, amount in cart_products %}
+          <li class="list-group-item d-flex justify-content-start align-items-center list-group-item-info">
+                <span class="flex-grow-1">{{object}}</span>
+                <span class="badge bg-primary rounded-pill">{{amount}}</span>
+                <a href="{% url 'products:add-cart' object.product.id object.id %}"><span class="badge bg-primary rounded-pill">+</span></a>
+                <a href="{% url 'products:remove-cart' object.product.id object.id %}"><span class="badge bg-primary rounded-pill">-</span></a>
+          </li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'products:clear-cart' %}"><button class="btn btn-danger my-4 " type="button">Clear cart</button></a>
+    {% else %}
+    Your cart is empty
+    {% endif %}
+{% endblock %}
