@@ -6,6 +6,7 @@ import os, pathlib
 from PIL import Image
 from django.db.models import Q
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 
 # Create your models here.
 # Available product types
@@ -100,7 +101,7 @@ class Product(models.Model):
         return product_specific_attributes
 
     def get_filtered_product_specific(self, query_dict):
-        # Returns QuerySet of product specific objects matching query dict
+        # Returns QuerySet of ProductSpecific objects matching arguments passed in query_dict
         product_specific_model = globals().get(f"Product{self.get_type_display()}", False)
         attribute_field_names = product_specific_model.get_attribute_field_names()
         # Create list of queries initialized with
@@ -116,34 +117,35 @@ class Product(models.Model):
             filtered = {}
         return filtered
 
-    def check_product_specific(self, query_dict):
-        #
+    def get_product_specific_by_attributes(self, query_dict):
+        # returns ProductSpecific based on query_dict passed in GET request
+        # if there are more products specific or some value is missing, returns empty dict
         # check if all values are not empty
         for key, val in query_dict.items():
             if not val:
-                return {}
+                return None
         # filter products with passed query_dict
         filtered = self.get_filtered_product_specific(query_dict)
         # if only one result is available return ProductSpecific object
         if len(filtered) == 1:
             return filtered.first()
         else:
-            return {}
+            return None
 
     def get_product_specific_by_full_id(self, id):
         product_specific_model = globals().get(f"Product{self.get_type_display()}", None)
-        return product_specific_model.objects.get(id=id)
+        return get_object_or_404(product_specific_model, id=id)
 
     @classmethod
     def get_product_specific(cls, p_id, ps_id):
-        prod = cls.objects.get(id=p_id)
+        prod = get_object_or_404(cls, id=p_id)
         if prod is not None:
             return prod.get_product_specific_by_full_id(ps_id)
 
 
 class ProductSpecific(models.Model):
     # Abstract class for specific product models with different attributes,
-    # Product.type must match specififc model TYPE, allows different variants certain product
+    # Product.type must match specific model TYPE, allows different variants certain product
     TYPE = None
     attribute_field_names = []
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
