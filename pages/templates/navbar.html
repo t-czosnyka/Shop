@@ -11,7 +11,6 @@
         top:-10px;
         opacity:0.9;
     }
-
 </style>
 
 
@@ -33,9 +32,12 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url 'pages:contact' %}">Contact</a>
         </li>
-        {% if request.session.cart %}
+      </ul>
+      </div>
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      {% if request.session.cart and request.session.cart_length %}
         <li class="nav-item">
-          <a href="{% url 'products:cart' %}"><i class="fa badge_cart fa-lg" value={{request.session.cart|length}}>&#xf07a;</i></a>
+          <a href="{% url 'products:cart' %}"><i class="fa badge_cart fa-lg" value={{request.session.cart_length}}>&#xf07a;</i></a>
         </li>
         {% else %}
         <li class="nav-item">
@@ -43,6 +45,6 @@
         </li>
         {% endif %}
       </ul>
-    </div>
+
   </div>
 </nav>
