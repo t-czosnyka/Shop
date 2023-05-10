@@ -29,7 +29,7 @@
         <!-- Specific attributes -->
         <!-- Form created based on attributes of available specific products, submitted every time attribute value is
          changed, showing available products with selected attributes -->
-        <form method="GET" id="form">
+        <form method="GET" id="form" class="my-2">
           {% for attribute, values in specific_attributes.items %}
             <label for="{{attribute}}" class="form-label">{{attribute}}:</label>
             <select class="form-select" name="{{attribute}}" id="{{attribute}}" onchange="this.form.submit()">
@@ -55,7 +55,7 @@
         </form>
 
         <!-- Naviagtion -->
-        <p class="card-text">{{product.description}}</p>
+        <p class="card-text my-2">{{product.description}}</p>
         <a href="{% url 'pages:home' %}" class="btn btn-secondary">Home</a>
       </div>
     </div>
@@ -73,7 +73,7 @@ function showImage(imgPath, imgText, thumbClicked) {
     thumb.classList.add('border');
     thumb.classList.add('border-info');
     curImage.src = imgPath;
-    curText.innerText
+    curText.innerText = imgText;
  }
 
 </script>
