@@ -33,3 +33,13 @@ is used to make it look nicer.
 
 <h2>Screenshots:</h2>
 
+<p>Home page:</p>
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/acaa46d4-eaec-4231-bfa2-330d50c0fd36" style="height:500px">
+
+<p>Shopping cart:</p>
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/e115e4b6-e021-4bc0-afc1-47e59131cd30" style="height:200px">
+
+<p>Product detail:</p>
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/68206db9-e13f-4ffc-bfcc-564546ebbcfb" style="height:500px">
+
+
