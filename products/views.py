@@ -1,20 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, ProductImage
-from .cart import add_to_cart, clear_cart, get_cart_specific_products_list, remove_from_cart, get_cart_status
+from .cart import add_to_cart, clear_cart, get_cart_products_specific_list, remove_from_cart, get_cart_status
 # Create your views here.
+
 
 def add_cart_view(request, p_id, ps_id):
     ps = Product.get_product_specific(p_id, ps_id)
     add_to_cart(request, ps)
     return redirect('products:cart')
 
+
 def remove_cart_view(request, p_id, ps_id):
     ps = Product.get_product_specific(p_id, ps_id)
     remove_from_cart(request, ps)
     return redirect('products:cart')
 
+
 def cart_view(request):
-    cart_products = get_cart_specific_products_list(request)
+    cart_products = get_cart_products_specific_list(request)
     cart_length, cart_value = get_cart_status(request)
     context = {
         'title': 'Cart',
@@ -22,8 +25,8 @@ def cart_view(request):
         'cart_length': cart_length,
         'cart_value': cart_value,
     }
-
     return render(request, 'products/cart.html', context)
+
 
 def clear_cart_view(request):
     clear_cart(request)
@@ -32,7 +35,7 @@ def clear_cart_view(request):
 
 def product_detail_view(request, pk):
     if request.method == 'GET':
-        product = get_object_or_404(Product,pk=pk)
+        product = get_object_or_404(Product, pk=pk)
         product.assign_main_img()
         # Add specific product to cart and reload the page
         if request.GET.get('add_cart', False):

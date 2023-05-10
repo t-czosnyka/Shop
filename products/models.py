@@ -2,13 +2,15 @@ import functools
 import operator
 from django.db import models
 from django.core.exceptions import ValidationError
-import os, pathlib
+import os
+import pathlib
 from PIL import Image
 from django.db.models import Q
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 
 # Create your models here.
+
 # Available product types
 PRODUCT_TYPES = {'1': 'Shoe',
                  '2': 'Suit',
@@ -23,7 +25,6 @@ class Producer(models.Model):
 
     def __str__(self):
         return self.name
-
 
 
 class Product(models.Model):
@@ -86,7 +87,6 @@ class Product(models.Model):
         # add values of all fields to result dict for every product
         for product_specific in filtered_products_specific:
             for field in attribute_field_objects:
-                # Check if field object is a Foreign Key
                 value = field.value_to_string(product_specific)
                 # If field is a Foreign key field get object display
                 if isinstance(field, models.ForeignKey):
@@ -132,15 +132,16 @@ class Product(models.Model):
         else:
             return None
 
-    def get_product_specific_by_full_id(self, id):
-        product_specific_model = globals().get(f"Product{self.get_type_display()}", None)
-        return get_object_or_404(product_specific_model, id=id)
-
     @classmethod
-    def get_product_specific(cls, p_id, ps_id):
-        prod = get_object_or_404(cls, id=p_id)
+    def get_product_specific(cls, product_id, product_specific_id):
+        # Returns ProductSpecific object, with product_specific_id, referring Product object indicated by product_id.
+        prod = get_object_or_404(cls, id=product_id)
         if prod is not None:
-            return prod.get_product_specific_by_full_id(ps_id)
+            return prod.get_product_specific_by_id(product_specific_id)
+
+    def get_product_specific_by_id(self, product_specific_id):
+        product_specific_model = globals().get(f"Product{self.get_type_display()}", None)
+        return get_object_or_404(product_specific_model, product=self, id=product_specific_id)
 
 
 class ProductSpecific(models.Model):
@@ -168,7 +169,7 @@ class ProductSpecific(models.Model):
         super().clean_fields(exclude=exclude)
         self.validate_type()
 
-    def save(self,**kwargs):
+    def save(self, **kwargs):
         self.validate_type()
         super().save(**kwargs)
 
@@ -185,12 +186,12 @@ class ProductSpecific(models.Model):
         return cls.attribute_field_names
 
     def get_full_id(self):
-        # return tuple containing referred general Product.id,ProductSpecifc.id
+        # return tuple containing referred general Product.id,ProductSpecific.id
         return f"{self.product.id}_{self.id}"
 
 
-
 class Color(models.Model):
+    # Table containing product colors.
     name = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
@@ -198,9 +199,12 @@ class Color(models.Model):
 
 # Classes inheriting from ProductSpecific must match naming pattern Product<Product.type>
 
+
 class ProductShoe(ProductSpecific):
+    # ProductSpecific Shoe class
     # Product type
     TYPE = '1'
+    # attribute_field_names - unique attributes for this type of product
     attribute_field_names = ['size', 'color']
     size = models.DecimalField(max_digits=2, decimal_places=0)
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
@@ -241,19 +245,21 @@ class ProductShirt(ProductSpecific):
     def __str__(self):
         return f"{self.product.name} Color: {self.color}, Size: {self.height_cm}, {self.collar_cm}"
 
+
 def get_image_path(instance, filename):
-    type = instance.product.get_type_display()
+    product_type = instance.product.get_type_display()
     file_extension = pathlib.Path(filename).suffix
-    return os.path.join('images', type, f"{str(instance.product.id)}{file_extension}")
+    return os.path.join('images', product_type, f"{str(instance.product.id)}{file_extension}")
+
 
 def get_thumbnail_path(instance, filename):
-    type = instance.product.get_type_display()
+    product_type = instance.product.get_type_display()
     file_extension = pathlib.Path(filename).suffix
-    return os.path.join('images', type, f"{str(instance.product.id)}_thumbnail{file_extension}")
+    return os.path.join('images', product_type, f"{str(instance.product.id)}_thumbnail{file_extension}")
 
 
 class ProductImage(models.Model):
-
+    # Table containing images and their thumbnails r
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     img = models.ImageField(upload_to=get_image_path)
     thumbnail = models.ImageField(upload_to=get_thumbnail_path)
@@ -261,7 +267,6 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"{self.product.id}-{self.product.name} {self.id}"
-
 
     def save(self, **kwargs):
         super().save(**kwargs)
@@ -288,11 +293,12 @@ class ProductImage(models.Model):
 
 
 class ProductMainImage(models.Model):
-    # junction table linking product to its main image, checking if ProductImage refers to correct Product
+    # junction table linking Product model to ProductImage model to set it as main image
     product = models.OneToOneField(Product, on_delete=models.CASCADE, primary_key=True, related_name='main_img')
     main_img = models.OneToOneField(ProductImage, on_delete=models.SET_NULL, null=True)
 
     def check_relation(self):
+        #  checking if ProductImage refers to correct Product
         if self.main_img is not None and self.main_img.product != self.product:
             raise ValidationError("Selected ProductImage does not belong to this Product.")
 
@@ -309,27 +315,3 @@ class ProductMainImage(models.Model):
         if self.main_img is not None:
             img = self.main_img.id
         return f"{self.product.name}-{self.product.id} Main image:{img}"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
