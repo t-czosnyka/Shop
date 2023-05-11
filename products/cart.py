@@ -48,13 +48,24 @@ def remove_from_cart(request, product_specific):
 
 
 def get_cart_products_specific_list(request):
-    # function returns a list of ProductSpecific objects currently in a cart
+    # function returns ProductsSpecific in cart as a list of tuples containing ProductSpecific object and amout
     current_cart = get_current_cart(request)
     products = []
     for full_id, amount in current_cart.items():
         product_id, product_specific_id = full_id.split('_')
         product_specific = Product.get_product_specific(product_id, product_specific_id)
         products.append((product_specific, amount))
+    return products
+
+def get_cart_products_specific_all(request):
+    # ProductsSpecific in cart as a QuerySet
+    current_cart = get_current_cart(request)
+    products = []
+    for full_id, amount in current_cart.items():
+        product_id, product_specific_id = full_id.split('_')
+        product_specific = Product.get_product_specific(product_id, product_specific_id)
+        for _ in range(amount):
+            products.append(product_specific)
     return products
 
 

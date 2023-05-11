@@ -16,7 +16,7 @@
     <div class="mt-4">
     <h2>Total: ${{cart_value}} </h2>
     </div>
-    <a href=""><button class="btn btn-primary my-4 " type="button">Order</button></a>
+    <a href="{% url 'orders:create' %}"><button class="btn btn-primary my-4 " type="button">Order</button></a>
     <a href="{% url 'products:clear-cart' %}"><button class="btn btn-danger my-4 " type="button">Clear cart</button></a>
     {% else %}
     <p>Your cart is empty</p>
