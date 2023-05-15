@@ -57,6 +57,7 @@ def get_cart_products_specific_list(request):
         products.append((product_specific, amount))
     return products
 
+
 def get_cart_products_specific_all(request):
     # ProductsSpecific in cart as a QuerySet
     current_cart = get_current_cart(request)
