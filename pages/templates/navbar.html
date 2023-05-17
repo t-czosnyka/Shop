@@ -35,7 +35,22 @@
       </ul>
       </div>
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-      {% if request.session.cart and request.session.cart_length %}
+        {% if request.user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="">{{request.user.username}}</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'users:logout' %}">Logout</a>
+        </li>
+        {% else %}
+          <li class="nav-item">
+          <a class="nav-link" href="{% url 'users:login' %}">Login</a>
+        </li>
+        {% endif %}
+      </ul>
+    
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% if request.session.cart and request.session.cart_length %}
         <li class="nav-item">
           <a href="{% url 'products:cart' %}"><i class="fa badge_cart fa-lg" value={{request.session.cart_length}}>&#xf07a;</i></a>
         </li>

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h1>Login:</h1>
+<div class="mt-4">
+    <form method="POST">
+        {% csrf_token %}
+        {{form|crispy}}
+        {% if request.GET.next %}
+            <input type="hidden" name="next" value="{{request.GET.next}}">
+        {% endif %}
+        <button type="submit" class="btn btn-primary my-4 " type="button">Login</button>
+        <a href="{% url 'pages:home' %}" class="btn btn-secondary">Go back</a>
+    </form>
+</div>
+<div>
+    {% if request.GET.order %}
+        <a href="{% url 'orders:nologin' %}">Continue without logging in</a>
+    {% endif %}
+</div>
+{% endblock %}

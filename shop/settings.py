@@ -144,3 +144,8 @@ CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+LOGIN_URL = '/users/login'
+
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
