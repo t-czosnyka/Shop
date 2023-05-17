@@ -31,7 +31,7 @@ class OrderProducts(models.Model):
         verbose_name_plural = "OrderProducts"
 
     def save(self, **kwargs):
-        print("save method called")
+        # save current product name and price in database(in case price changes in the future)
         if self.product_specific is not None:
             self.product_name = str(self.product_specific)
             try:
