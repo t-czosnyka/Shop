@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h1>Register User:</h1>
+<div class="mt-4">
+    <form method="POST">
+        {% csrf_token %}
+        {{form_user|crispy}}
+        {{form_user_data|crispy}}
+        {% if request.GET.next %}
+            <input type="hidden" name="next" value="{{request.GET.next}}">
+        {% endif %}
+        <button type="submit" class="btn btn-primary my-4 " type="button">Register</button>
+        <a href="{% url 'pages:home' %}" class="btn btn-secondary">Go back</a>
+    </form>
+</div>
+{% endblock %}
