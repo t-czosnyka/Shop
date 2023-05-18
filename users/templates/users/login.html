@@ -14,11 +14,23 @@
     </form>
 </div>
 <div>
-    <a href="{% url 'users:register' %}"><button class="btn btn-primary my-1 " type="button">Create account</button></a>
+    {% if request.GET.next %}
+    <a href="{% url 'users:register' %}?next={{request.GET.next}}">
+        <button class="btn btn-primary my-1 " type="button">Create account</button>
+    </a>
+    {% else %}
+    <a href="{% url 'users:register' %}">
+        <button class="btn btn-primary my-1 " type="button">Create account</button>
+    </a>
+    {% endif %}
 </div>
 <div>
     {% if request.GET.order %}
-        <a href="{% url 'orders:nologin' %}">Continue without logging in</a>
+        {% if request.GET.next %}
+        <a href="{% url 'users:nologin' %}?next={{request.GET.next}}">Continue without logging in</a>
+        {% else %}
+        <a href="{% url 'users:nologin' %}">Continue without logging in</a>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}

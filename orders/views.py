@@ -51,7 +51,4 @@ def order_data_view(request):
     return render(request, 'orders/order_data.html', context)
 
 
-def no_login_order(request):
-    # set attribute to order without logging in
-    request.session['no_login_order'] = True
-    return redirect('orders:data')
+
