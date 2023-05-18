@@ -10,7 +10,8 @@ from django.forms.models import model_to_dict
 from django.apps import apps
 from django.db.models import ObjectDoesNotExist
 
-UserData = apps.get_model('users','UserData')
+UserData = apps.get_model('users', 'UserData')
+
 
 def order_data_view(request):
     # get order data and create order
@@ -25,7 +26,7 @@ def order_data_view(request):
         return redirect('pages:home')
     form = OrderForm(request.POST or None)
     # get user data and put into initial form
-    if request.user.is_authenticated and not request.POST:
+    if request.method == "GET" and request.user.is_authenticated:
         user_obj = User.objects.get(id=request.user.id)
         data = model_to_dict(user_obj, fields=['email', 'first_name', 'last_name'])
         try:
@@ -34,7 +35,7 @@ def order_data_view(request):
         except ObjectDoesNotExist:
             pass
         form.initial = data
-    if request.method == "POST":
+    elif request.method == "POST":
         if form.is_valid():
             order_object = form.save()
             # Create order products, not using bulk_create to call save method
@@ -42,8 +43,10 @@ def order_data_view(request):
                 order_product = OrderProducts(order=order_object, product_specific=product)
                 order_product.save()
             clear_cart(request)
-            messages.success(request, "Your order has been created.")
-        return redirect('pages:home')
+            messages.success(request, f"Your order number {order_object.id} has been created.")
+            return redirect('pages:home')
+        else:
+            messages.warning(request, "Wrong data inserted.")
     context = {
         'title': 'Order data',
         'form': form
