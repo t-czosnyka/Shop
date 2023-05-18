@@ -9,7 +9,7 @@
         {% if request.GET.next %}
             <input type="hidden" name="next" value="{{request.GET.next}}">
         {% endif %}
-        <button type="submit" class="btn btn-primary my-4 " type="button">Login</button>
+        <button type="submit" class="btn btn-primary my-4">Login</button>
         <a href="{% url 'pages:home' %}" class="btn btn-secondary">Go back</a>
     </form>
 </div>
@@ -32,5 +32,8 @@
         <a href="{% url 'users:nologin' %}">Continue without logging in</a>
         {% endif %}
     {% endif %}
+</div>
+<div class="my-2">
+    <a href="{% url 'users:reset_insert_email' %}">I forgot my password</a>
 </div>
 {% endblock %}

@@ -149,3 +149,13 @@ LOGIN_URL = '/users/login'
 
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'my.django.email1@gmail.com'
+EMAIL_HOST_PASSWORD = 'fzejokqldcrmkkfk'
+
+EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+PASSWORD_RESET_TIMEOUT = 5*60
