@@ -7,7 +7,7 @@
         {% csrf_token %}
         {{form|crispy}}
         <button type="submit" class="btn btn-primary my-4">Reset</button>
-        <a href="{% url 'pages:home' %}" class="btn btn-secondary">Go back</a>
+        <button onclick="history.back()" class="btn btn-secondary" type="button">Go back</button>
     </form>
 </div>
 {% endblock %}

@@ -12,6 +12,7 @@ from django.contrib.auth.forms import SetPasswordForm
 
 # Create your views here.
 
+
 def redirect_next_url(request):
     # after successful operation redirect to url in next parameter if it was provided or to home
     next_url = request.GET.get('next', False) or request.POST.get('next', False)
@@ -127,6 +128,7 @@ def reset_new_password_view(request, uidb64, token):
         'form': form
     }
     return render(request, 'users/new_password_form.html', context)
+
 
 def no_login_order(request):
     # set attribute to order without logging in

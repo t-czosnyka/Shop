@@ -11,7 +11,7 @@
             <input type="hidden" name="next" value="{{request.GET.next}}">
         {% endif %}
         <button type="submit" class="btn btn-primary my-4">Register</button>
-        <a href="{% url 'pages:home' %}" class="btn btn-secondary">Go back</a>
+        <button onclick="history.back()" class="btn btn-secondary" type="button">Go back</button>
     </form>
 </div>
 {% endblock %}
