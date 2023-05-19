@@ -90,7 +90,7 @@ def reset_insert_email_view(request):
             url = request.build_absolute_uri(f'/users/reset/{uidb64}/{token}')
             sent = send_mail(
                 'Password reset link',
-                f'Click this link to reset your password:'
+                f'Click this link to reset your password:\n'
                 f'{url}',
                 'django-e-shop',
                 [user.email],
@@ -109,8 +109,14 @@ def reset_insert_email_view(request):
 
 
 def reset_new_password_view(request, uidb64, token):
+    # decode user_id and get user
     user_id = urlsafe_base64_decode(uidb64)
-    user = get_object_or_404(User, id=user_id)
+    try:
+        user = get_object_or_404(User, id=user_id)
+    except ValueError:
+        messages.warning(request, "User not found.")
+        return redirect('pages:home')
+    # check provided token
     if not default_token_generator.check_token(user=user, token=token):
         messages.warning(request, "Not valid link.")
         return redirect('pages:home')
