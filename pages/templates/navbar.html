@@ -35,32 +35,39 @@
       </ul>
     </div>
   </div>
-    <div class="collapse navbar-collapse me-auto" id="navbarNavRight">
-      <ul class="navbar-nav ">
-        {% if request.user.is_authenticated %}
+  <div class="collapse navbar-collapse me-auto" id="navbarNavRight">
+    <ul class="navbar-nav ">
+      {% if request.user.is_authenticated %}
+      <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {{request.user.username}}
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'users:change_data' request.user.id %}">User data</a></li>
+            <li><a class="dropdown-item" href="#">My orders</a></li>
+            <li><a class="dropdown-item" href="{% url 'users:change_password' request.user.id %}">Change password</a></li>
+          </ul>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'users:logout' %}">Logout</a>
+      </li>
+      {% else %}
         <li class="nav-item">
-          <a class="nav-link" href="">{{request.user.username}}</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'users:logout' %}">Logout</a>
-        </li>
-        {% else %}
-          <li class="nav-item">
-          <a class="nav-link" href="{% url 'users:login' %}">Login</a>
-        </li>
-        {% endif %}
-      </ul>
-    
-      <ul class="navbar-nav">
-        {% if request.session.cart and request.session.cart_length %}
-        <li class="nav-item">
-          <a href="{% url 'products:cart' %}"><i class="fa badge_cart fa-lg" value={{request.session.cart_length}}>&#xf07a;</i></a>
-        </li>
-        {% else %}
-        <li class="nav-item">
-           <a href="{% url 'products:cart' %}"><i class="fa badge_cart fa-lg" value=0>&#xf07a;</i></a>
-        </li>
-        {% endif %}
-      </ul>
-    </div>
+        <a class="nav-link" href="{% url 'users:login' %}">Login</a>
+      </li>
+      {% endif %}
+    </ul>
+
+    <ul class="navbar-nav">
+      {% if request.session.cart and request.session.cart_length %}
+      <li class="nav-item">
+        <a href="{% url 'products:cart' %}"><i class="fa badge_cart fa-lg" value={{request.session.cart_length}}>&#xf07a;</i></a>
+      </li>
+      {% else %}
+      <li class="nav-item">
+         <a href="{% url 'products:cart' %}"><i class="fa badge_cart fa-lg" value=0>&#xf07a;</i></a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
 </nav>

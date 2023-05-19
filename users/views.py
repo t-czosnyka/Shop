@@ -8,7 +8,7 @@ from django.db.models import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 
 # Create your views here.
 
@@ -140,6 +140,28 @@ def no_login_order(request):
     # set attribute to order without logging in
     request.session['no_login_order'] = True
     return redirect_next_url(request)
+
+
+def change_password_view(request, id):
+    user = get_object_or_404(User, id=id)
+    form = PasswordChangeForm(user, request.POST or None)
+    if request.method == 'POST':
+        if form.is_valid():
+            new_password = request.POST.get('new_password1', '')
+            if new_password:
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, "Password changed successfully.")
+                return redirect('pages:home')
+    context = {
+        'title': 'Change password',
+        'form': form,
+    }
+    return render(request, 'users/change_password_form.html', context)
+
+
+def change_data_view(request, id):
+    pass
 
 
 
