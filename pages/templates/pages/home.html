@@ -1,13 +1,11 @@
 {% extends 'base.html' %}
-
 {% block content %}
-    <table>
-    {% for page in paginator %}
-        <tr>
-            {% for product in page.object_list %}
-                {% include 'product_card.html' %}
-            {% endfor %}
-        </tr>
-    {% endfor %}
-    </table>
-{% endblock content %}
+    <div class="container text-center">
+        <h1>Welcome to MyShop</h1>
+          <div class="row row-cols-3">
+              {% for product in products %}
+                <div class="col">{% include 'product_card.html' %}</div>
+              {% endfor %}
+          </div>
+    </div>
+{% endblock %}
