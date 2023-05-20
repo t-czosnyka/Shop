@@ -15,8 +15,11 @@ UserData = apps.get_model('users', 'UserData')
 
 def order_data_view(request):
     # get order data and create order
+    user_object = None
+    if request.user.is_authenticated:
+        user_object = User.objects.get(id=request.user.id)
     # user logged in or selected to order without login
-    if not request.user.is_authenticated and not request.session.get('no_login_order', False):
+    if user_object is None and not request.session.get('no_login_order', False):
         url = settings.LOGIN_URL + '?next=' + request.path + '&order=True'
         return redirect(url)
     # redirect if cart is empty
@@ -26,18 +29,20 @@ def order_data_view(request):
         return redirect('pages:home')
     form = OrderForm(request.POST or None)
     # get user data and put into initial form
-    if request.method == "GET" and request.user.is_authenticated:
-        user_obj = User.objects.get(id=request.user.id)
-        data = model_to_dict(user_obj, fields=['email', 'first_name', 'last_name'])
+    if request.method == "GET" and user_object is not None:
+        data = model_to_dict(user_object, fields=['email', 'first_name', 'last_name'])
         try:
-            user_data_obj = UserData.objects.get(user=user_obj)
-            data.update(model_to_dict(user_data_obj))
+            user_data_object = UserData.objects.get(user=user_object)
+            data.update(model_to_dict(user_data_object))
         except ObjectDoesNotExist:
             pass
         form.initial = data
     elif request.method == "POST":
         if form.is_valid():
-            order_object = form.save()
+            order_object = form.save(commit=False)
+            if user_object is not None:
+                order_object.user= user_object
+            order_object.save()
             # Create order products, not using bulk_create to call save method
             for product in products:
                 order_product = OrderProducts(order=order_object, product_specific=product)
@@ -52,6 +57,7 @@ def order_data_view(request):
         'form': form
     }
     return render(request, 'orders/order_data.html', context)
+
 
 
 

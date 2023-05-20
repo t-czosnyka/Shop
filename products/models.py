@@ -99,6 +99,7 @@ class Product(models.Model):
                     display = value
                 if value not in used_values[field.name]:
                     used_values[field.name].add(value)
+                    # check if field value is selected
                     selected = query_dict.get(field.name, False) == value
                     product_specific_attributes[field.name].append({'value': value, 'display': display,
                                                                     'selected': selected})

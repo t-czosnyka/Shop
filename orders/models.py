@@ -1,11 +1,15 @@
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
 # Create your models here.
 
 
 class Order(models.Model):
     email = models.EmailField()
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     state = models.CharField(max_length=50)
