@@ -32,6 +32,18 @@
         <li class="nav-item">
           <a class="nav-link" href="{% url 'pages:contact' %}">Contact</a>
         </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Products
+          </a>
+          <ul class="dropdown-menu">
+            {% if product_types %}
+              {% for type in product_types %}
+              <li><a class="dropdown-item" href="#">{{type}}</a></li>
+              {% endfor %}
+            {% endif %}
+          </ul>
+      </li>
       </ul>
     </div>
   </div>
@@ -43,8 +55,8 @@
             {{request.user.username}}
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{% url 'users:change_data' request.user.id %}">User data</a></li>
             <li><a class="dropdown-item" href="#">My orders</a></li>
+            <li><a class="dropdown-item" href="{% url 'users:change_data' request.user.id %}">Change user data</a></li>
             <li><a class="dropdown-item" href="{% url 'users:change_password' request.user.id %}">Change password</a></li>
           </ul>
       </li>

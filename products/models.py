@@ -16,6 +16,10 @@ PRODUCT_TYPES = {'1': 'Shoe',
                  '2': 'Suit',
                  '3': 'Shirt'}
 
+PRODUCT_TYPES_PLURALS = {'1': 'Shoes',
+                         '2': 'Suits',
+                         '3': 'Shirts'}
+
 
 class Producer(models.Model):
     name = models.CharField(max_length=50, unique=True)
