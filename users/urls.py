@@ -10,5 +10,6 @@ urlpatterns = [
     path('change_password/<slug:uidb64>', views.change_password_view, name='change_password'),
     path('change_data/<slug:uidb64>', views.change_data_view, name='change_data'),
     path('reset/email', views.reset_insert_email_view, name='reset_insert_email'),
-    path('reset/<slug:uidb64>/<slug:token>', views.reset_new_password_view, name='reset_new_password')
+    path('reset/<slug:uidb64>/<slug:token>', views.reset_new_password_view, name='reset_new_password'),
+    path('orders/<slug:uidb64>', views.users_orders_list, name='orders_list')
 ]

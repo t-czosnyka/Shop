@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from .forms import LoginForm, UserDataForm, UserForm, ResetForm, UserChangeForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -9,9 +9,10 @@ from django.core.mail import send_mail
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
+from django.apps import apps
 
 # Create your views here.
-
+Order = apps.get_model('orders', 'Order')
 
 def redirect_next_url(request):
     # after successful operation redirect to url in next parameter if it was provided or to home
@@ -127,6 +128,9 @@ def get_user_from_uidb64(request, uidb64):
 
 def reset_new_password_view(request, uidb64, token):
     user = get_user_from_uidb64(request, uidb64)
+    if user is not None and user.id != request.user.id:
+        messages.warning(request, "You are not authorized to view this page.")
+        user = None
     if user is None:
         return redirect('pages:home')
     # check provided token
@@ -151,6 +155,9 @@ def reset_new_password_view(request, uidb64, token):
 
 def change_password_view(request, uidb64):
     user = get_user_from_uidb64(request, uidb64)
+    if user is not None and user.id != request.user.id:
+        messages.warning(request, "You are not authorized to view this page.")
+        user = None
     if user is None:
         return redirect('pages:home')
     form = PasswordChangeForm(user, request.POST or None)
@@ -171,6 +178,9 @@ def change_password_view(request, uidb64):
 
 def change_data_view(request, uidb64):
     user = get_user_from_uidb64(request, uidb64)
+    if user is not None and user.id != request.user.id:
+        messages.warning(request, "You are not authorized to view this page.")
+        user = None
     if user is None:
         return redirect('pages:home')
     form_user = UserChangeForm(request.POST or None, instance=user)
@@ -187,6 +197,23 @@ def change_data_view(request, uidb64):
         'form_user_data': form_user_data
     }
     return render(request, 'users/change_user_data_form.html', context)
+
+
+def users_orders_list(request, uidb64):
+    user = get_user_from_uidb64(request, uidb64)
+    if user is not None and user.id != request.user.id:
+        messages.warning(request, "You are not authorized to view this page.")
+        user = None
+    if user is None:
+        return redirect('pages:home')
+    orders_list = Order.objects.filter(user=user)
+    context = {
+        'title': 'Change user data',
+        'orders_list': orders_list,
+    }
+    return render(request, 'users/orders.html', context)
+
+
 
 
 

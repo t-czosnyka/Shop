@@ -55,7 +55,7 @@
             {{request.user.username}}
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">My orders</a></li>
+            <li><a class="dropdown-item" href="{% url 'users:orders_list' uidb64 %}">My orders</a></li>
             <li><a class="dropdown-item" href="{% url 'users:change_data' uidb64 %}">Change user data</a></li>
             <li><a class="dropdown-item" href="{% url 'users:change_password' uidb64 %}">Change password</a></li>
           </ul>

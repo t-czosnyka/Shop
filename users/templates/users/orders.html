@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1 class="my-4">Your Orders: </h1>
+<div class="mt-4">
+    {% if orders_list %}
+        {% for orders in orders_list %}
+            {{order.id}}
+        {% endfor %}
+    {% else %}
+        <p>No orders found</p>
+    {% endif %}
+</div>
+{% endblock %}
