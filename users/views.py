@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import LoginForm, UserDataForm, UserForm, ResetForm
+from .forms import LoginForm, UserDataForm, UserForm, ResetForm, UserChangeForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.urls import NoReverseMatch
@@ -74,10 +74,12 @@ def logout_view(request):
     messages.success(request, "You have been logged out.")
     return redirect('pages:home')
 
+
 def no_login_order(request):
     # set attribute to order without logging in
     request.session['no_login_order'] = True
     return redirect_next_url(request)
+
 
 def reset_insert_email_view(request):
     form = ResetForm()
@@ -171,6 +173,20 @@ def change_data_view(request, uidb64):
     user = get_user_from_uidb64(request, uidb64)
     if user is None:
         return redirect('pages:home')
+    form_user = UserChangeForm(request.POST or None, instance=user)
+    form_user_data = UserDataForm(request.POST or None, instance=user.user_data)
+    if request.method == 'POST':
+        if form_user.is_valid() and form_user_data.is_valid():
+            form_user.save()
+            form_user_data.save()
+            messages.success(request, "User data changed successfully.")
+            return redirect('pages:home')
+    context = {
+        'title': 'Change user data',
+        'form_user': form_user,
+        'form_user_data': form_user_data
+    }
+    return render(request, 'users/change_user_data_form.html', context)
 
 
 

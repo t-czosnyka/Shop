@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h1>Change User data:</h1>
+<div class="mt-4">
+    <form method="POST">
+        {% csrf_token %}
+        {{form_user|crispy}}
+        {{form_user_data|crispy}}
+        <button type="submit" class="btn btn-primary my-4">Change data</button>
+        <button onclick="history.back()" class="btn btn-secondary" type="button">Go back</button>
+    </form>
+</div>
+{% endblock %}

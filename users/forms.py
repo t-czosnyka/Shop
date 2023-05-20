@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
 
+
 class ResetForm(forms.Form):
     email = forms.EmailField()
 
@@ -19,6 +20,12 @@ class UserForm(UserCreationForm):
 
     class Meta:
         fields = ("username", "password1", "password2", "email", "first_name", "last_name")
+        model = User
+
+
+class UserChangeForm(forms.ModelForm):
+    class Meta:
+        fields = ("email", "first_name", "last_name")
         model = User
 
 class UserDataForm(forms.ModelForm):
