@@ -56,8 +56,8 @@
           </a>
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="#">My orders</a></li>
-            <li><a class="dropdown-item" href="{% url 'users:change_data' request.user.id %}">Change user data</a></li>
-            <li><a class="dropdown-item" href="{% url 'users:change_password' request.user.id %}">Change password</a></li>
+            <li><a class="dropdown-item" href="{% url 'users:change_data' uidb64 %}">Change user data</a></li>
+            <li><a class="dropdown-item" href="{% url 'users:change_password' uidb64 %}">Change password</a></li>
           </ul>
       </li>
       <li class="nav-item">

@@ -74,6 +74,10 @@ def logout_view(request):
     messages.success(request, "You have been logged out.")
     return redirect('pages:home')
 
+def no_login_order(request):
+    # set attribute to order without logging in
+    request.session['no_login_order'] = True
+    return redirect_next_url(request)
 
 def reset_insert_email_view(request):
     form = ResetForm()
@@ -108,13 +112,20 @@ def reset_insert_email_view(request):
     return render(request, 'users/reset_insert_email.html', context)
 
 
-def reset_new_password_view(request, uidb64, token):
+def get_user_from_uidb64(request, uidb64):
     # decode user_id and get user
-    user_id = urlsafe_base64_decode(uidb64)
+    user = None
     try:
+        user_id = urlsafe_base64_decode(uidb64)
         user = get_object_or_404(User, id=user_id)
     except ValueError:
         messages.warning(request, "User not found.")
+    return user
+
+
+def reset_new_password_view(request, uidb64, token):
+    user = get_user_from_uidb64(request, uidb64)
+    if user is None:
         return redirect('pages:home')
     # check provided token
     if not default_token_generator.check_token(user=user, token=token):
@@ -136,14 +147,10 @@ def reset_new_password_view(request, uidb64, token):
     return render(request, 'users/new_password_form.html', context)
 
 
-def no_login_order(request):
-    # set attribute to order without logging in
-    request.session['no_login_order'] = True
-    return redirect_next_url(request)
-
-
-def change_password_view(request, id):
-    user = get_object_or_404(User, id=id)
+def change_password_view(request, uidb64):
+    user = get_user_from_uidb64(request, uidb64)
+    if user is None:
+        return redirect('pages:home')
     form = PasswordChangeForm(user, request.POST or None)
     if request.method == 'POST':
         if form.is_valid():
@@ -160,9 +167,10 @@ def change_password_view(request, id):
     return render(request, 'users/change_password_form.html', context)
 
 
-def change_data_view(request, id):
-    pass
-
+def change_data_view(request, uidb64):
+    user = get_user_from_uidb64(request, uidb64)
+    if user is None:
+        return redirect('pages:home')
 
 
 
