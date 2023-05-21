@@ -42,13 +42,11 @@ def order_data_view(request):
             order_object = form.save(commit=False)
             if user_object is not None:
                 order_object.user= user_object
-            order_object.total = request.session.get('cart_value', 0)
-            order_object.product_count = request.session.get('cart_length', 0)
             order_object.save()
             # Create order products, not using bulk_create to call save method
             for product in products:
                 order_product = OrderProducts(order=order_object, product_specific=product)
-                order_product.save(dont_calculate=True)
+                order_product.save(create=True)
             clear_cart(request)
             messages.success(request, f"Your order number {order_object.id} has been created.")
             return redirect('pages:home')
@@ -59,6 +57,10 @@ def order_data_view(request):
         'form': form
     }
     return render(request, 'orders/order_data.html', context)
+
+
+def order_detail_view(request, id):
+    return
 
 
 

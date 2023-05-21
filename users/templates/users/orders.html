@@ -6,7 +6,7 @@
         <div class="list-group">
         {% for order in orders_list %}
             <a href="#"><button type="button" class="list-group-item list-group-item-action list-group-item-info">
-                Order number: {{order.id}} {{order.created}} {{order.product_count}} Items Total {{order.total}}</button></a>
+                Order number: {{order.id}} {{order.created}} {{order.total_items}} Items Total {{order.total_value}}</button></a>
         {% endfor %}
         </div>
     {% else %}

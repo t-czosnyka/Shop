@@ -18,20 +18,20 @@ class Order(models.Model):
     number = models.CharField(max_length=50)
     postal_code = models.CharField(max_length=50)
 
-    total = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
-    product_count = models.IntegerField(default=0, blank=True)
-
     def __str__(self):
         return f"{self.id}-{self.email}"
 
-    def calculate_products(self):
-        print("calculating")
-        self.total = 0
+    @property
+    def total_value(self):
+        value = 0
         products = self.order_products.all()
-        self.product_count = len(products)
         for product in products:
-            self.total += product.product_price
-        self.save()
+            value += product.product_price
+        return value
+
+    @property
+    def total_items(self):
+        return len(self.order_products.all())
 
 
 class OrderProducts(models.Model):
@@ -46,18 +46,15 @@ class OrderProducts(models.Model):
     class Meta:
         verbose_name_plural = "OrderProducts"
 
-    def save(self, dont_calculate=False, **kwargs):
+    def save(self, create=False, **kwargs):
         # save current product name and price in database(in case price changes in the future)
-        if self.product_specific is not None:
+        if self.product_specific is not None and create:
             self.product_name = str(self.product_specific)
             try:
                 self.product_price = self.product_specific.product.price
             except AttributeError as e:
                 pass
         super().save(**kwargs)
-        # recalculate order total and products amount if added manually
-        if not dont_calculate:
-            self.order.calculate_products()
 
     def __str__(self):
         return f"Order:{self.order.id}-{self.product_name}"
