@@ -42,6 +42,8 @@ def order_data_view(request):
             order_object = form.save(commit=False)
             if user_object is not None:
                 order_object.user= user_object
+            order_object.total = request.session.get('cart_value', 0)
+            order_object.product_count = request.session.get('cart_length', 0)
             order_object.save()
             # Create order products, not using bulk_create to call save method
             for product in products:

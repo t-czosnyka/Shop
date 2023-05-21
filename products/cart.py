@@ -84,6 +84,7 @@ def get_cart_status(request):
         total_value += amount*product_specific.product.price
     # update cart_length session object
     request.session['cart_length'] = total_amount
+    request.session['cart_value'] = str(total_value)
     return total_amount, total_value
 
 
@@ -93,6 +94,8 @@ def clear_cart(request):
         del request.session['cart']
     if 'cart_length' in request.session:
         del request.session['cart_length']
+    if 'cart_value' in request.session:
+        del request.session['cart_value']
 
 
 def get_current_cart(request):

@@ -18,8 +18,17 @@ class Order(models.Model):
     number = models.CharField(max_length=50)
     postal_code = models.CharField(max_length=50)
 
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
+    product_count = models.IntegerField(default=0, blank=True)
+
     def __str__(self):
         return f"{self.id}-{self.email}"
+
+    def calculate_products(self):
+        products = self.order_products.objects.all()
+        self.product_count = len(products)
+        for product in products:
+            self.total += product.product_price
 
 
 class OrderProducts(models.Model):

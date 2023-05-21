@@ -6,4 +6,4 @@ class OrderForm(ModelForm):
 
     class Meta:
         model = Order
-        exclude = ['user', ]
+        exclude = ['user', 'product_count', 'total']
