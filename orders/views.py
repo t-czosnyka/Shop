@@ -48,7 +48,7 @@ def order_data_view(request):
             # Create order products, not using bulk_create to call save method
             for product in products:
                 order_product = OrderProducts(order=order_object, product_specific=product)
-                order_product.save()
+                order_product.save(dont_calculate=True)
             clear_cart(request)
             messages.success(request, f"Your order number {order_object.id} has been created.")
             return redirect('pages:home')
