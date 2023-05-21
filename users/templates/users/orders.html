@@ -3,9 +3,12 @@
 <h1 class="my-4">Your Orders: </h1>
 <div class="mt-4">
     {% if orders_list %}
-        {% for orders in orders_list %}
-            {{order.id}}
+        <div class="list-group">
+        {% for order in orders_list %}
+            <a href="#"><button type="button" class="list-group-item list-group-item-action list-group-item-info">
+                Order number: {{order.id}} {{order.created}} {{order.product_count}} Items Total {{order.total}}</button></a>
         {% endfor %}
+        </div>
     {% else %}
         <p>No orders found</p>
     {% endif %}

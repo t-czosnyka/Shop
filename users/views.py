@@ -10,9 +10,12 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.apps import apps
+from django.http import HttpResponseForbidden, HttpResponse, HttpResponseNotFound
+from django.conf import settings
 
 # Create your views here.
 Order = apps.get_model('orders', 'Order')
+
 
 def redirect_next_url(request):
     # after successful operation redirect to url in next parameter if it was provided or to home
@@ -82,7 +85,22 @@ def no_login_order(request):
     return redirect_next_url(request)
 
 
+def get_user_from_uidb64(request, uidb64):
+    # decode user_id and get user
+    user = None
+    try:
+        user_id = urlsafe_base64_decode(uidb64)
+        user = User.objects.get(id=user_id)
+    except (ValueError, ObjectDoesNotExist):
+        pass
+    return user
+
+
 def reset_insert_email_view(request):
+    # Check if user is not logged in.
+    if request.user.is_authenticated:
+        messages.warning(request, "You are already logged in.")
+        return redirect('pages:home')
     form = ResetForm()
     if request.method == "POST":
         email = request.POST.get('email', '')
@@ -115,28 +133,18 @@ def reset_insert_email_view(request):
     return render(request, 'users/reset_insert_email.html', context)
 
 
-def get_user_from_uidb64(request, uidb64):
-    # decode user_id and get user
-    user = None
-    try:
-        user_id = urlsafe_base64_decode(uidb64)
-        user = get_object_or_404(User, id=user_id)
-    except ValueError:
-        messages.warning(request, "User not found.")
-    return user
-
-
 def reset_new_password_view(request, uidb64, token):
+    # Check if user is not logged in.
+    if request.user.is_authenticated:
+        messages.warning(request, "You are already logged in.")
+        return redirect('pages:home')
+    # Check provided user id.
     user = get_user_from_uidb64(request, uidb64)
-    if user is not None and user.id != request.user.id:
-        messages.warning(request, "You are not authorized to view this page.")
-        user = None
     if user is None:
-        return redirect('pages:home')
-    # check provided token
+        return HttpResponseNotFound
+    # Check provided token.
     if not default_token_generator.check_token(user=user, token=token):
-        messages.warning(request, "Not valid link.")
-        return redirect('pages:home')
+        return HttpResponse('401 Unauthorized. Token error.', status=401)
     form = SetPasswordForm(user, request.POST or None)
     if request.method == 'POST':
         if form.is_valid():
@@ -153,13 +161,29 @@ def reset_new_password_view(request, uidb64, token):
     return render(request, 'users/new_password_form.html', context)
 
 
-def change_password_view(request, uidb64):
+def check_user(request, uidb64):
+    # Get user from uidb64.
+    response = None
     user = get_user_from_uidb64(request, uidb64)
-    if user is not None and user.id != request.user.id:
-        messages.warning(request, "You are not authorized to view this page.")
-        user = None
+    # Check if decoded user exists.
     if user is None:
-        return redirect('pages:home')
+        response = HttpResponseNotFound(request)
+    # Check if user is authenticated.
+    elif not request.user.is_authenticated:
+        # redirect to login page
+        messages.warning(request, "Login required.")
+        url = settings.LOGIN_URL + '?next=' + request.path
+        response = redirect(url)
+    # Check if user is authorized to access this page.
+    elif user.id != request.user.id:
+        response = HttpResponseForbidden(request)
+    return user, response
+
+
+def change_password_view(request, uidb64):
+    user, response = check_user(request, uidb64)
+    if response is not None:
+        return response
     form = PasswordChangeForm(user, request.POST or None)
     if request.method == 'POST':
         if form.is_valid():
@@ -177,12 +201,9 @@ def change_password_view(request, uidb64):
 
 
 def change_data_view(request, uidb64):
-    user = get_user_from_uidb64(request, uidb64)
-    if user is not None and user.id != request.user.id:
-        messages.warning(request, "You are not authorized to view this page.")
-        user = None
-    if user is None:
-        return redirect('pages:home')
+    user, response = check_user(request, uidb64)
+    if response is not None:
+        return response
     form_user = UserChangeForm(request.POST or None, instance=user)
     form_user_data = UserDataForm(request.POST or None, instance=user.user_data)
     if request.method == 'POST':
@@ -200,12 +221,9 @@ def change_data_view(request, uidb64):
 
 
 def users_orders_list(request, uidb64):
-    user = get_user_from_uidb64(request, uidb64)
-    if user is not None and user.id != request.user.id:
-        messages.warning(request, "You are not authorized to view this page.")
-        user = None
-    if user is None:
-        return redirect('pages:home')
+    user, response = check_user(request, uidb64)
+    if response is not None:
+        return response
     orders_list = Order.objects.filter(user=user)
     context = {
         'title': 'Change user data',
