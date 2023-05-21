@@ -6,9 +6,10 @@ from .forms import OrderForm
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.forms.models import model_to_dict
-# Create your views here.
 from django.apps import apps
 from django.db.models import ObjectDoesNotExist
+from django.http import HttpResponseForbidden
+# Create your views here.
 
 UserData = apps.get_model('users', 'UserData')
 
@@ -60,7 +61,21 @@ def order_data_view(request):
 
 
 def order_detail_view(request, id):
-    return
+    order_object = get_object_or_404(Order, id=id)
+    # Check if user is authenticated.
+    if not request.user.is_authenticated:
+        # redirect to login page
+        messages.warning(request, "Login required.")
+        url = settings.LOGIN_URL + '?next=' + request.path
+        return redirect(url)
+    # Check if user is authorized to access this page.
+    elif order_object.user is None or order_object.user.id != request.user.id:
+        return HttpResponseForbidden(request)
+    context ={
+        'title': 'Order details',
+        'order': order_object,
+    }
+    return render(request, 'orders/order_detail.html', context)
 
 
 

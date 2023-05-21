@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div>
+<h1 class="my-2">Order details:</h1>
+    <ul class="list-group list-group-flush">
+        {% for key,value in order%}
+            <li class="list-group-item">
+                <div><b>{{key}}:</b></div>
+                <div>{{value}}</div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+<div>
+    <h2 class="my-3">Ordered products: </h2>
+    <ul class="list-group mb-4 list-group-numbered">
+          {% for product in order.order_products.all %}
+                <li class="list-group-item d-flex justify-content-start align-items-center list-group-item-info">
+                      <span class="flex-grow-1">{{product.product_name}} <b>${{product.product_price}}</b></span>
+                </li>
+          {% endfor %}
+    </ul>
+    <p class="fs-3"><b>Total Items: {{order.total_items}}</b></p>
+    <p class="fs-3"><b>Total Value: {{order.total_value}}</b></p>
+</div>
+<button onclick="history.back()" class="btn btn-secondary" type="button">Go back</button>
+{% endblock %}

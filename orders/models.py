@@ -21,6 +21,13 @@ class Order(models.Model):
     def __str__(self):
         return f"{self.id}-{self.email}"
 
+    def __iter__(self):
+        for field in self._meta.fields:
+            name = field.verbose_name.capitalize()
+            if name.lower() in ['id', 'user', 'created', 'modified']:
+                continue
+            yield (field.verbose_name.capitalize(), field.value_to_string(self))
+
     @property
     def total_value(self):
         value = 0
