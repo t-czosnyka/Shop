@@ -205,7 +205,10 @@ def change_data_view(request, uidb64):
     if response is not None:
         return response
     form_user = UserChangeForm(request.POST or None, instance=user)
-    form_user_data = UserDataForm(request.POST or None, instance=user.user_data)
+    try:
+        form_user_data = UserDataForm(request.POST or None, instance=user.user_data)
+    except AttributeError:
+        form_user_data = UserDataForm(request.POST or None)
     if request.method == 'POST':
         if form_user.is_valid() and form_user_data.is_valid():
             form_user.save()

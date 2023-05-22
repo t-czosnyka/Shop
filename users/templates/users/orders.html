@@ -6,11 +6,13 @@
         <div class="list-group">
         {% for order in orders_list %}
             <a href="{% url 'orders:detail' order.id %}"><button type="button" class="list-group-item list-group-item-action list-group-item-info">
-                Order number: {{order.id}} {{order.created}} {{order.total_items}} Items Total {{order.total_value}}</button></a>
+                Order number: <b>{{order.id}}</b> <div class="d-flex justify-content-end">  {{order.created}}</div>
+                <div>Items: {{order.total_items}}  Items Value: <b>{{order.total_value}}</b></div></button></a>
         {% endfor %}
         </div>
     {% else %}
         <p>No orders found</p>
     {% endif %}
 </div>
+<button onclick="history.back()" class="btn btn-secondary mt-4" type="button">Go back</button>
 {% endblock %}
