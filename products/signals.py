@@ -19,3 +19,8 @@ def create_product_main_img(sender, instance, created, **kwargs):
     if created:
         prod_main_img = ProductMainImage(product=instance, main_img=None)
         prod_main_img.save()
+
+@receiver(post_init, sender=Product)
+def assign_model(sender, instance, **kwargs):
+    # assign ProductSpecific class to object of Product class on init
+    instance.product_specific_model = instance.get_product_specific_model()

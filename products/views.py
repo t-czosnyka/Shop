@@ -44,6 +44,7 @@ def product_detail_view(request, pk):
             return response
         # get product available specific products based on request GET parameters
         specific_attributes = product.get_filtered_product_specific_attributes(request.GET)
+        print(specific_attributes)
         # get queryset of images referring this product with its main img as the first one
         if product.main_img is not None and product.main_img.main_img is not None:
             main_img_id = product.main_img.main_img.id

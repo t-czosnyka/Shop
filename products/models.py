@@ -34,6 +34,7 @@ class Producer(models.Model):
 class Product(models.Model):
     # General product model with common attributes for all products
     TYPE_CHOICES = [(x, y) for x, y in PRODUCT_TYPES.items()]
+    product_specific_model = None
 
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField()
@@ -54,88 +55,56 @@ class Product(models.Model):
             self.main_img_short = ProductImage.objects.filter(product=self).first()
 
     def get_filtered_product_specific_attributes(self, query_dict):
-        # method returns dictionary with attributes of ProductSpecific objects referring this Product and
-        # available values of these attributes. Keys are attribute names and values are list of dicts containing:
-        # actual value, how value ist displayed in form, and information if it was selected in query_dict.
-        # e.g.
-        # product_specific_attributes = {'size': [
-        #                                           {value:'42', display:'42', selected = False}
-        #                                           {value:'43', display:'43', selected = True}
-        #                                         ],
-        #                               'color':[
-        #                                           {value:'1', display:'Black', selected = False}
-        #                                           {value:'2', display:'White', selected = False}
-        #                                        ]}
-        #
-        product_specific_attributes = {}
-        # get Product specific model referring to this product based on Product.type - ProductSpecific model must
-        # match the naming pattern: "ProductType"
-        product_specific_model = globals().get(f"Product{self.get_type_display()}", None)
-        # return empty dict if product specific model is not found
-        if product_specific_model is None:
-            return product_specific_attributes
-        # Filter ProductSpecific objects matching query dict
-        filtered_products_specific = self.get_filtered_product_specific(query_dict)
-        if len(filtered_products_specific) == 0:
-            return product_specific_attributes
-        # Create dict based on result of filtering product_specific
-        used_values = {}
-        attribute_field_names = product_specific_model.get_attribute_field_names()
-        # prepare keys of result dict
-        for attribute in attribute_field_names:
-            product_specific_attributes[attribute] = []
-            # keep track of added values to remove duplicates
-            used_values[attribute] = set()
-        # get attribute field objects of ProductSpecific class
-        attribute_field_objects = product_specific_model.get_attribute_field_objects()
-        # add values of all fields to result dict for every product
-        for product_specific in filtered_products_specific:
-            for field in attribute_field_objects:
-                value = field.value_to_string(product_specific)
-                # If field is a Foreign key field get object display
-                if isinstance(field, models.ForeignKey):
-                    display = getattr(product_specific, f'{field.name}')
-                else:
-                    display = value
-                if value not in used_values[field.name]:
-                    used_values[field.name].add(value)
-                    # check if field value is selected
-                    selected = query_dict.get(field.name, False) == value
-                    product_specific_attributes[field.name].append({'value': value, 'display': display,
-                                                                    'selected': selected})
-        return product_specific_attributes
+        # Method filters ProductSpecific objects referencing this Product with parameters from query_dict
+        # and returns values of these objects attributes.
+        if self.product_specific_model is None:
+            return {}
+        filtered_products_specific = self.product_specific_model.filter_objects_with_query_dict(query_dict, self)
+        return self.get_product_specific_attributes(filtered_products_specific, query_dict)
 
-    def get_filtered_product_specific(self, query_dict):
-        # Returns QuerySet of ProductSpecific objects matching arguments passed in query_dict
-        product_specific_model = globals().get(f"Product{self.get_type_display()}", False)
-        attribute_field_names = product_specific_model.get_attribute_field_names()
-        # Create list of queries initialized with
-        q_list = [Q(product=self.id), Q(available=True)]
-        # Append queries from query_dict to q_list
-        for key, val in query_dict.items():
-            if key in attribute_field_names and val:
-                q_list.append(Q(**{f"{key}": val}))
-        # filter ProductSpecific objects with queries from q_list
-        try:
-            filtered = product_specific_model.objects.filter(functools.reduce(operator.and_, q_list))
-        except (ValidationError, ValueError):
-            filtered = {}
-        return filtered
+    @staticmethod
+    def get_product_specific_attributes(query_set, query_dict):
+        # Method returns values of attributes of all products in query_set in the form of :
+        # all_attributes = {'size': [
+        #                            {value:'42', display:'42', selected = False}
+        #                            {value:'43', display:'43', selected = True}
+        #                           ],
+        #                   'color':[
+        #                            {value:'1', display:'Black', selected = False}
+        #                            {value:'2', display:'White', selected = False}
+        #                           ]}
+        all_attributes = {}
+        used_values = {}
+        for product_specific in query_set:
+            single_object_attributes = product_specific.get_object_attribute_values()
+            for attribute in single_object_attributes.keys():
+                # check if attribute value is not already added
+                value = single_object_attributes[attribute]['value']
+                used_values_set = used_values.get(attribute, set())
+                if value in used_values_set:
+                    continue
+                # mark value as selected if it is in query dict
+                single_object_attributes[attribute]['selected'] = query_dict.get(attribute, False) == value
+                all_attributes[attribute] = all_attributes.get(attribute, []) + [single_object_attributes[attribute]]
+                used_values[attribute] = used_values_set.union({value})
+        return all_attributes
 
     def get_product_specific_by_attributes(self, query_dict):
-        # returns ProductSpecific based on query_dict passed in GET request
+        # returns ProductSpecific object based on query_dict passed in GET request
         # if there are more products specific or some value is missing, returns empty dict
-        # check if all values are not empty
-        for key, val in query_dict.items():
+        if self.product_specific_model is None:
+            return None
+        product_specific_object = None
+        # check if all queries are not empty
+        for val in query_dict.values():
             if not val:
                 return None
         # filter products with passed query_dict
-        filtered = self.get_filtered_product_specific(query_dict)
+        filtered = self.product_specific_model.filter_objects_with_query_dict(query_dict, self)
         # if only one result is available return ProductSpecific object
         if len(filtered) == 1:
-            return filtered.first()
-        else:
-            return None
+            product_specific_object = filtered.first()
+        return product_specific_object
 
     @classmethod
     def get_product_specific(cls, product_id, product_specific_id):
@@ -145,8 +114,14 @@ class Product(models.Model):
             return prod.get_product_specific_by_id(product_specific_id)
 
     def get_product_specific_by_id(self, product_specific_id):
-        product_specific_model = globals().get(f"Product{self.get_type_display()}", None)
-        return get_object_or_404(product_specific_model, product=self, id=product_specific_id)
+        return get_object_or_404(self.product_specific_model, product=self, id=product_specific_id)
+
+    def get_product_specific_model(self):
+        type_name = PRODUCT_TYPES.get(self.type, '').lower()
+        if type_name == '':
+            return None
+        product_specific_set_name = f"product{type_name}_set"
+        return getattr(self, product_specific_set_name).model
 
 
 class ProductSpecific(models.Model):
@@ -178,29 +153,42 @@ class ProductSpecific(models.Model):
         self.validate_type()
         super().save(**kwargs)
 
-    @classmethod
-    def get_attribute_field_objects(cls):
-        attribute_field_objects = []
-        for field in cls._meta.get_fields():
-            if field.name in cls.attribute_field_names:
-                attribute_field_objects.append(field)
-        return attribute_field_objects
-
-    @classmethod
-    def get_attribute_field_names(cls):
-        return cls.attribute_field_names
-
     def get_full_id(self):
         # return tuple containing referred general Product.id,ProductSpecific.id
         return f"{self.product.id}_{self.id}"
 
     @property
     def url_specific(self):
-        url = reverse('products:detail', kwargs={'pk':self.product.id})+'?'
+        url = reverse('products:detail', kwargs={'pk': self.product.id})+'?'
         for attribute in self.attribute_field_names:
             value = self._meta.get_field(attribute).value_to_string(self)
-            url+=f'&{attribute}={value}'
+            url += f'&{attribute}={value}'
         return url
+
+    def get_object_attribute_values(self):
+        attribute_values = {}
+        for attribute in self.attribute_field_names:
+            value = self._meta.get_field(attribute).value_to_string(self)
+            display = getattr(self, f'{attribute}')
+            attribute_values[attribute] = {'value': value, 'display': display, 'selected': False}
+        return attribute_values
+
+    @classmethod
+    def filter_objects_with_query_dict(cls, query_dict, product):
+        # Returns QuerySet of ProductSpecific objects matching arguments passed in query_dict
+        # Initialize list of queries
+        query_list = [Q(product=product), Q(available=True)]
+        # Append queries from query_dict to query_list
+        for attribute in cls.attribute_field_names:
+            val = query_dict.get(attribute, False)
+            if val:
+                query_list.append(Q(**{f"{attribute}": val}))
+        # filter ProductSpecific objects with queries from query_list
+        try:
+            filtered = cls.objects.filter(functools.reduce(operator.and_, query_list))
+        except (ValidationError, ValueError) as e:
+            filtered = {}
+        return filtered
 
 
 class Color(models.Model):
