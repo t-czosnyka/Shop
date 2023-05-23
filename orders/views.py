@@ -49,6 +49,7 @@ def order_data_view(request):
                 order_product = OrderProducts(order=order_object, product_specific=product)
                 order_product.save(create=True)
             clear_cart(request)
+            order_object.send_to_user()
             messages.success(request, f"Your order number {order_object.id} has been created.")
             return redirect('pages:home')
         else:
