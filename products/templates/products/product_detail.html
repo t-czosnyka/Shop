@@ -12,7 +12,7 @@
           <figcaption id='currentText'>{{ product.main_img_short.description }}</figcaption>
         </figure>
         {% endif %}
-        <h5 class="card-title">$ {{product.price}} </h5>
+        <h5 class="card-title"> {{product.price}} </h5>
         <!-- Thumbnails -->
         {% for image in images %}
           {% if image.thumbnail %}
@@ -29,7 +29,7 @@
         <!-- Specific attributes -->
         <!-- Form created based on attributes of available specific products, submitted every time attribute value is
          changed, showing available products with selected attributes -->
-        <form method="GET" id="form" class="my-2">
+        <form method="GET" action="#form" id="form" class="my-2">
           {% for attribute, values in specific_attributes.items %}
             <label for="{{attribute}}" class="form-label">{{attribute}}:</label>
             <select class="form-select" name="{{attribute}}" id="{{attribute}}" onchange="this.form.submit()">
@@ -99,6 +99,4 @@ function addCart(){
   form.submit()
 }
 </script>
-
-
 {% endblock %}
