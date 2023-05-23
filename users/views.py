@@ -163,27 +163,27 @@ def reset_new_password_view(request, uidb64, token):
 
 def check_user(request, uidb64):
     # Get user from uidb64.
-    response = None
+    error_response = None
     user = get_user_from_uidb64(request, uidb64)
     # Check if decoded user exists.
     if user is None:
-        response = HttpResponseNotFound(request)
+        error_response = HttpResponseNotFound(request)
     # Check if user is authenticated.
     elif not request.user.is_authenticated:
         # redirect to login page
         messages.warning(request, "Login required.")
         url = settings.LOGIN_URL + '?next=' + request.path
-        response = redirect(url)
+        error_response = redirect(url)
     # Check if user is authorized to access this page.
     elif user.id != request.user.id:
-        response = HttpResponseForbidden(request)
-    return user, response
+        error_response = HttpResponseForbidden(request)
+    return user, error_response
 
 
 def change_password_view(request, uidb64):
-    user, response = check_user(request, uidb64)
-    if response is not None:
-        return response
+    user, error_response = check_user(request, uidb64)
+    if error_response is not None:
+        return error_response
     form = PasswordChangeForm(user, request.POST or None)
     if request.method == 'POST':
         if form.is_valid():
@@ -201,9 +201,9 @@ def change_password_view(request, uidb64):
 
 
 def change_data_view(request, uidb64):
-    user, response = check_user(request, uidb64)
-    if response is not None:
-        return response
+    user, error_response = check_user(request, uidb64)
+    if error_response is not None:
+        return error_response
     form_user = UserChangeForm(request.POST or None, instance=user)
     try:
         form_user_data = UserDataForm(request.POST or None, instance=user.user_data)
@@ -224,9 +224,9 @@ def change_data_view(request, uidb64):
 
 
 def users_orders_list(request, uidb64):
-    user, response = check_user(request, uidb64)
-    if response is not None:
-        return response
+    user, error_response = check_user(request, uidb64)
+    if error_response is not None:
+        return error_response
     orders_list = Order.objects.filter(user=user)
     context = {
         'title': 'Change user data',
