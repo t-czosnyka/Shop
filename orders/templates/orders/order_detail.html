@@ -17,7 +17,7 @@
     <ul class="list-group mb-4 list-group-numbered">
           {% for product in order.order_products.all %}
                 <li class="list-group-item d-flex justify-content-start align-items-center list-group-item-info">
-                      <span class="flex-grow-1">{{product.product_name}} <b>${{product.product_price}}</b></span>
+                      <a href="{{product.product_specific.url_specific}}"><span class="flex-grow-1">{{product.product_name}} <b>${{product.product_price}}</b></span></a>
                 </li>
           {% endfor %}
     </ul>

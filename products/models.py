@@ -7,7 +7,7 @@ import pathlib
 from PIL import Image
 from django.db.models import Q
 from django.conf import settings
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, reverse
 
 # Create your models here.
 
@@ -193,6 +193,14 @@ class ProductSpecific(models.Model):
     def get_full_id(self):
         # return tuple containing referred general Product.id,ProductSpecific.id
         return f"{self.product.id}_{self.id}"
+
+    @property
+    def url_specific(self):
+        url = reverse('products:detail', kwargs={'pk':self.product.id})+'?'
+        for attribute in self.attribute_field_names:
+            value = self._meta.get_field(attribute).value_to_string(self)
+            url+=f'&{attribute}={value}'
+        return url
 
 
 class Color(models.Model):
