@@ -55,7 +55,7 @@ def product_detail_view(request, pk):
     else:
         images = ProductImage.objects.filter(product=product)
     # get ratings that involve a comment
-    comments = product.ratings.exclude(comment="")
+    comments = product.ratings.exclude(comment="").order_by('-created')
     context = {
         'title': 'Product Detail',
         'product': product,
