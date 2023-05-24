@@ -5,9 +5,10 @@ from django.core.exceptions import ValidationError
 import os
 import pathlib
 from PIL import Image
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.conf import settings
 from django.shortcuts import get_object_or_404, reverse
+from django.contrib.auth.models import User
 
 # Create your models here.
 
@@ -43,6 +44,7 @@ class Product(models.Model):
     added = models.DateTimeField(auto_now_add=True)
     type = models.CharField(choices=TYPE_CHOICES, max_length=3)
     promoted = models.BooleanField(default=False)
+    avg_rating = models.DecimalField(max_digits=2, decimal_places=1, default=0)
 
     def __str__(self):
         return self.name
@@ -122,6 +124,20 @@ class Product(models.Model):
             return None
         product_specific_set_name = f"product{type_name}_set"
         return getattr(self, product_specific_set_name).model
+
+    def update_rating(self):
+        calculated_avg = self.ratings.all().aggregate(Avg('value')).get('value__avg', None)
+        if calculated_avg is None:
+            calculated_avg= 0
+        self.avg_rating = calculated_avg
+
+    @property
+    def number_of_ratings(self):
+        return self.ratings.count()
+
+    @property
+    def rating_percentage(self):
+        return self.avg_rating/5*100
 
 
 class ProductSpecific(models.Model):
@@ -316,3 +332,20 @@ class ProductMainImage(models.Model):
         if self.main_img is not None:
             img = self.main_img.id
         return f"{self.product.name}-{self.product.id} Main image:{img}"
+
+
+class Rating(models.Model):
+    VALUE_CHOICES = [(1, "1"), (2, "2"), (3, "3"), (4, "4"), (5, "5")]
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ratings')
+    value = models.IntegerField(choices=VALUE_CHOICES)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Product: {self.product}, User: {self.user}, value: {self.value}"
+
+    class Meta:
+        unique_together = ('product', 'user')
+
