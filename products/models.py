@@ -87,7 +87,9 @@ class Product(models.Model):
                     continue
                 # mark value as selected if it is in query dict
                 single_object_attributes[attribute]['selected'] = query_dict.get(attribute, False) == value
-                all_attributes[attribute] = all_attributes.get(attribute, []) + [single_object_attributes[attribute]]
+                # format attribute name string
+                attribute_name = attribute.capitalize().replace('_',' ')
+                all_attributes[attribute_name] = all_attributes.get(attribute, []) + [single_object_attributes[attribute]]
                 used_values[attribute] = used_values_set.union({value})
         return all_attributes
 
@@ -145,6 +147,7 @@ class ProductSpecific(models.Model):
     # Product.type must match specific model TYPE, allows different variants certain product
     TYPE = None
     attribute_field_names = []
+    not_attribute_field_names = ['product', 'available', 'added', 'id']
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     available = models.BooleanField()
     added = models.DateTimeField(auto_now_add=True)
