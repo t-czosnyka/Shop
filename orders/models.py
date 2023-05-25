@@ -14,7 +14,7 @@ class Order(models.Model):
         (WAIT_PAYMENT, "Waiting for payment"),
         (WAIT_SENDING, "Waiting for sending"),
         (SENT, "Sent"),
-        (DELIVERED, "Delivered")]
+        (DELIVERED, "Delivered"),]
     email = models.EmailField()
     user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -27,6 +27,7 @@ class Order(models.Model):
     number = models.CharField(max_length=50)
     postal_code = models.CharField(max_length=50)
     status = models.CharField(choices=STATUS_CHOICES, default=WAIT_PAYMENT, max_length=40)
+    confirmed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.id}-{self.email}"
@@ -62,6 +63,9 @@ class Order(models.Model):
         i = 1
         for product in self.get_order_products():
             message += f"{i}. " + str(product.product_specific)
+        if self.status == self.UNCONFIRMED:
+
+            message += f"Your order is not confirmed. Follow this link to confirm it:\n"
         self.user.email_user(subject=subject, message=message)
 
     @property

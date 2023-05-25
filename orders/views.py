@@ -41,9 +41,10 @@ def order_data_view(request):
     elif request.method == "POST":
         if form.is_valid():
             order_object = form.save(commit=False)
+            # if user is logged in order is automatically confirmed and user is assigned
             if user_object is not None:
-                order_object.user= user_object
-            order_object.save()
+                order_object.user = user_object
+                order_object.confirmed = True
             # Create order products, not using bulk_create to call save method
             for product in products:
                 order_product = OrderProducts(order=order_object, product_specific=product)
@@ -78,6 +79,9 @@ def order_detail_view(request, id):
     }
     return render(request, 'orders/order_detail.html', context)
 
+
+def order_confirm_view(request, token):
+    pass
 
 
 
