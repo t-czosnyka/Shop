@@ -8,7 +8,7 @@
       <div class="card-body" id ="card">
         <div class="star-rating"
            style="background-image: linear-gradient(to right, gold 0%, gold {{product.rating_percentage}}%,
-           transparent {{product.rating_percentage}}%, transparent 100%);"></div>
+           transparent {{product.rating_percentage}}%, transparent 100%); font-size: 25px;"></div>
         <div style="font-size: 10px;">{{product.number_of_ratings}} ratings</div>
         <!-- Big Image -->
         {% if product.main_img_short.img.url %}
@@ -71,7 +71,9 @@
                   <div class="flex-grow-1">{{comment.user}}</div> <div class="justify-content-end">{{comment.created|naturaltime}}</div>
                 </div>
                 <div class="card-body">
-                  <h5 class="card-title">Rating: {{comment.value}}</h5>
+                  <h5 class="card-title">Rating: <div class="star-rating"
+                     style="background-image: linear-gradient(to right, gold 0%, gold {{comment.value_percentage}}%,
+                     transparent {{comment.value_percentage}}%, transparent 100%);"></div></h5>
                   <p class="card-text">{{comment.comment}}</p>
                   {% if comment.user == request.user %}
                     <a href="{% url 'products:rate' product.id%}"><button class="btn btn-secondary" type="button">Edit comment</button></a>

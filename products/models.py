@@ -352,3 +352,8 @@ class Rating(models.Model):
     class Meta:
         unique_together = ('product', 'user')
 
+    @property
+    def value_percentage(self):
+        return self.value * 20
+
+
