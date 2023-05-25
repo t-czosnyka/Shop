@@ -9,22 +9,22 @@
         {% if request.GET.next %}
             <input type="hidden" name="next" value="{{request.GET.next}}">
         {% endif %}
-        <button type="submit" class="btn btn-primary my-4">Login</button>
+        <button type="submit" class="btn btn-primary my-3">Login</button>
         <button onclick="history.back()" class="btn btn-secondary" type="button">Go back</button>
     </form>
 </div>
-<div>
+<div class="mb-2">
     {% if request.GET.next %}
     <a href="{% url 'users:register' %}?next={{request.GET.next}}">
-        <button class="btn btn-primary my-1 " type="button">Create account</button>
+        <button class="btn btn-primary my-1 " type="button">Create an account</button>
     </a>
     {% else %}
     <a href="{% url 'users:register' %}">
-        <button class="btn btn-primary my-1 " type="button">Create account</button>
+        <button class="btn btn-primary my-1 " type="button">Create an account</button>
     </a>
     {% endif %}
 </div>
-<div>
+<div class="my-2">
     {% if request.GET.order %}
         {% if request.GET.next %}
         <a href="{% url 'users:nologin' %}?next={{request.GET.next}}">Continue without logging in</a>

@@ -12,9 +12,51 @@ from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.apps import apps
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseNotFound
 from django.conf import settings
+from .token_generator import account_activation_token_generator
+import datetime
+from django.utils import timezone
 
 # Create your views here.
 Order = apps.get_model('orders', 'Order')
+
+
+def get_user_from_uidb64(request, uidb64):
+    # decode user_id and get user
+    user = None
+    try:
+        user_id = urlsafe_base64_decode(uidb64)
+        user = User.objects.get(id=user_id)
+    except (ValueError, ObjectDoesNotExist):
+        pass
+    return user
+
+
+def send_activation_link(request, user):
+    # Create activation link for the user and send it to his email address.
+    token = account_activation_token_generator.make_token(user=user)
+    uidb64 = urlsafe_base64_encode(str(user.id).encode())
+    url = request.build_absolute_uri(f'/users/activate/{uidb64}/{token}')
+    user.email_user(subject="Account activation link",
+                    message=f"Follow this link to activate your account:\n{url}",
+                    from_email="Django MyShop")
+
+
+def account_activate_view(request, uidb64, token):
+    # Check if user is not logged in.
+    if request.user.is_authenticated:
+        messages.warning(request, "You are already logged in.")
+        return redirect('pages:home')
+    # Check provided user id.
+    user = get_user_from_uidb64(request, uidb64)
+    if user is None:
+        return HttpResponseNotFound
+    # Check provided token.
+    if not account_activation_token_generator.check_token(user=user, token=token):
+        return HttpResponse('401 Unauthorized. Token error.', status=401)
+    user.user_data.is_active = True
+    user.user_data.save()
+    messages.success(request, "Your account is now active and you can log in.")
+    return redirect("pages:home")
 
 
 def redirect_next_url(request):
@@ -41,9 +83,8 @@ def register_view(request):
             # assign data to user data
             form_user_data = UserDataForm(request.POST, instance=user.user_data)
             form_user_data.save()
-            # login user after successful registration
-            login(request, user)
-            messages.success(request, f"User {user.username} successfully created.")
+            send_activation_link(request, user)
+            messages.success(request, f"User {user.username} successfully created. Please activate your account.")
             return redirect_next_url(request)
     context = {
         'title': 'Register User',
@@ -61,9 +102,22 @@ def login_view(request):
         username = request.POST.get('username', '')
         password = request.POST.get('password', '')
         user = authenticate(username=username, password=password)
-        if user is not None:
+        try:
+            active = user.user_data.is_active
+        except AttributeError:
+            active = False
+        if user is not None and active:
             login(request, user)
             return redirect_next_url(request)
+        # If users account is not activated and the activation token is no longer valid, another email will be sent.
+        elif user is not None and not active:
+            dt = timezone.now() - user.date_joined
+            if dt.seconds > settings.ACCOUNT_ACTIVATION_TIMEOUT:
+                send_activation_link(request, user)
+                messages.warning(request, "New activation email was sent. Please activate your account.")
+            else:
+                messages.warning(request, "Please activate your account through the activation email.")
+            return redirect('users:login')
         else:
             messages.warning(request, "Wrong login or password.")
     context = {
@@ -83,17 +137,6 @@ def no_login_order(request):
     # set attribute to order without logging in
     request.session['no_login_order'] = True
     return redirect_next_url(request)
-
-
-def get_user_from_uidb64(request, uidb64):
-    # decode user_id and get user
-    user = None
-    try:
-        user_id = urlsafe_base64_decode(uidb64)
-        user = User.objects.get(id=user_id)
-    except (ValueError, ObjectDoesNotExist):
-        pass
-    return user
 
 
 def reset_insert_email_view(request):
@@ -233,7 +276,6 @@ def users_orders_list(request, uidb64):
         'orders_list': orders_list,
     }
     return render(request, 'users/orders.html', context)
-
 
 
 

@@ -162,4 +162,7 @@ EMAIL_HOST_USER = 'my.django.email1@gmail.com'
 EMAIL_HOST_PASSWORD = 'fzejokqldcrmkkfk'
 
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
+
+
 PASSWORD_RESET_TIMEOUT = 5*60
+ACCOUNT_ACTIVATION_TIMEOUT = 60

@@ -32,5 +32,5 @@ class UserDataForm(forms.ModelForm):
 
     class Meta:
         model = UserData
-        exclude = ['user']
+        exclude = ['user', 'is_active']
 

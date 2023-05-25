@@ -15,6 +15,7 @@ class UserData(models.Model):
     street = models.CharField(max_length=50, blank=True)
     number = models.CharField(max_length=50, blank=True)
     postal_code = models.CharField(max_length=50, blank=True)
+    is_active = models.BooleanField(default=False)
 
     class Meta:
         verbose_name_plural = "Users data"
