@@ -123,6 +123,8 @@ function addCart(){
   hiddenField.value = '1';
   form.appendChild(hiddenField);
   document.body.appendChild(form);
+  form.action = '#';
+  console.log(form);
   form.submit()
 }
 </script>
