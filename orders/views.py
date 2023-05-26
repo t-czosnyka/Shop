@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, reverse, get_object_or_404
+from django.shortcuts import render, redirect, reverse, get_object_or_404, HttpResponse
 from products.cart import get_cart_products_specific_all, clear_cart
 from .models import Order, OrderProducts
 from django.contrib import messages
@@ -9,6 +9,9 @@ from django.forms.models import model_to_dict
 from django.apps import apps
 from django.db.models import ObjectDoesNotExist
 from django.http import HttpResponseForbidden
+from django.utils.http import urlsafe_base64_decode
+from .token_generator import order_confirmation_token_generator
+from django.http import HttpResponseNotFound
 # Create your views here.
 
 UserData = apps.get_model('users', 'UserData')
@@ -45,13 +48,16 @@ def order_data_view(request):
             if user_object is not None:
                 order_object.user = user_object
                 order_object.confirmed = True
+            order_object.save()
             # Create order products, not using bulk_create to call save method
             for product in products:
                 order_product = OrderProducts(order=order_object, product_specific=product)
                 order_product.save(create=True)
             clear_cart(request)
-            order_object.send_to_user()
+            order_object.send_to_user(request)
             messages.success(request, f"Your order number {order_object.id} has been created.")
+            if user_object is None:
+                messages.warning(request, "You still have to confirm it using a link sent to your email.")
             return redirect('pages:home')
         else:
             messages.warning(request, "Wrong data inserted.")
@@ -80,8 +86,25 @@ def order_detail_view(request, id):
     return render(request, 'orders/order_detail.html', context)
 
 
-def order_confirm_view(request, token):
-    pass
+def order_confirm_view(request, oidb64, token):
+    # Get order from base 64 encoded oidb64.
+    try:
+        order_id = urlsafe_base64_decode(oidb64)
+        order = Order.objects.get(id = order_id)
+    except (ValueError, ObjectDoesNotExist):
+        return HttpResponseNotFound(request)
+
+    if order.confirmed:
+        messages.success(request, "Order already confirmed.")
+    # Check provided token.
+    elif order_confirmation_token_generator.check_token(order, token):
+        order.confirmed = True
+        order.save()
+        messages.success(request, "Your order has been confirmed")
+        order.send_confirmation_ok_email()
+    else:
+        return HttpResponse('401 Unauthorized. Token error.', status=401)
+    return redirect('pages:home')
 
 
 

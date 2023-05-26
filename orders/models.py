@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from .token_generator import order_confirmation_token_generator
+from django.utils.http import urlsafe_base64_encode
+
 # Create your models here.
 
 
@@ -53,8 +57,8 @@ class Order(models.Model):
     def get_order_products(self):
         return self.order_products.all()
 
-    def send_to_user(self):
-        # Send email to user with order data
+    def send_to_user(self, request):
+        # Send email to user with order data and confirmation link if necessary.
         subject = f"Your Order nr: {self.id}"
         message = f"Your order number {self.id} has been created. Order data:\n"
         for data in self.get_order_data():
@@ -63,10 +67,19 @@ class Order(models.Model):
         i = 1
         for product in self.get_order_products():
             message += f"{i}. " + str(product.product_specific)
-        if self.status == self.UNCONFIRMED:
+        if not self.confirmed:
+            oidb64 = urlsafe_base64_encode(str(self.id).encode())
+            token = order_confirmation_token_generator.make_token(self)
+            url = request.build_absolute_uri(f'/orders/confirm/{oidb64}/{token}')
+            message += f"\nYour order is not confirmed. Follow this link to confirm it:\n"
+            message += url
+            subject += " (Unconfirmed)"
+        send_mail(subject=subject, message=message, from_email="Django MyShop", recipient_list=[self.email])
 
-            message += f"Your order is not confirmed. Follow this link to confirm it:\n"
-        self.user.email_user(subject=subject, message=message)
+    def send_confirmation_ok_email(self):
+        subject = f"Your Order nr: {self.id} is now confirmed."
+        message = f"Your order has been successfully confirmed."
+        send_mail(subject=subject, message=message, from_email="Django MyShop", recipient_list=[self.email])
 
     @property
     def total_value(self):

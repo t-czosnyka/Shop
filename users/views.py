@@ -16,6 +16,7 @@ from .token_generator import account_activation_token_generator
 import datetime
 from django.utils import timezone
 
+
 # Create your views here.
 Order = apps.get_model('orders', 'Order')
 
@@ -184,7 +185,7 @@ def reset_new_password_view(request, uidb64, token):
     # Check provided user id.
     user = get_user_from_uidb64(request, uidb64)
     if user is None:
-        return HttpResponseNotFound
+        return HttpResponseNotFound(request)
     # Check provided token.
     if not default_token_generator.check_token(user=user, token=token):
         return HttpResponse('401 Unauthorized. Token error.', status=401)

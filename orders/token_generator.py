@@ -8,8 +8,7 @@ class OrderConfirmationTokenGenerator(PasswordResetTokenGenerator):
 
     def make_token(self, order):
         """
-        Return a token that can be used once to do a password reset
-        for the given user.
+        Return a token that can be used once to confirm order
         """
         return self._make_token_with_timestamp(
             order,
@@ -32,25 +31,12 @@ class OrderConfirmationTokenGenerator(PasswordResetTokenGenerator):
         return "%s-%s" % (ts_b36, hash_string)
 
     def _make_hash_value(self, order, timestamp):
-        """
-        Hash the user's primary key, email (if available), and some user state
-        that's sure to change after a password reset to produce a token that is
-        invalidated when it's used:
-        1. The password field will change upon a password reset (even if the
-           same password is chosen, due to password salting).
-        2. The last_login field will usually be updated very shortly after
-           a password reset.
-        Failing those things, settings.PASSWORD_RESET_TIMEOUT eventually
-        invalidates the token.
-
-        Running this data through salted_hmac() prevents password cracking
-        attempts using the reset token, provided the secret isn't compromised.
-        """
+        # make hash with order confirmed status that will change after token is used.
         return f"{order.id}{order.email}{timestamp}{order.confirmed}"
 
     def check_token(self, order, token):
         """
-        Check that a password reset token is correct for a given user.
+        Check that an order confirm token is correct for given order.
         """
         if not (order and token):
             return False
@@ -82,4 +68,4 @@ class OrderConfirmationTokenGenerator(PasswordResetTokenGenerator):
         return True
 
 
-token_generator = OrderConfirmationTokenGenerator()
+order_confirmation_token_generator = OrderConfirmationTokenGenerator()
