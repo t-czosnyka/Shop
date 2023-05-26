@@ -1,4 +1,4 @@
-<h1>E-shop</h1>
+<h1>MyShop</h1>
 <p>
 My Django framework training project - e-commerce application for clothing store.
 </p>
@@ -6,10 +6,13 @@ My Django framework training project - e-commerce application for clothing store
 **Still under construction.**
 </p>
 <p> 
-Application allows different types of products. Each type of product can have different attributes.
+Application allows different categories of products. Each category of product can have unique attributes.
 One product can also have different variants e.g. color, size. The user can select a product feature, like color, 
 and the application will dynamically filter available product variants with this feature. When all features
 are selected product may be added to the cart and then ordered.
+User accounts are implemented. Logged-in user can rate and comment on products, view past orders and have order data
+filled in automatically. Accounts must be confirmed by activation link sent on provided email address. Password reset
+is possible by email.
 </p>
 <p> 
 While the frontend is not the primary focus of this project, Bootstrap 5 and some basic JS
@@ -17,16 +20,18 @@ is used to make it look nicer.
 </p>
 
 <h3>Features:</h3>
-- Different product types with flexible parameters,
-- Different product variants,
-- Dynamic query of different product variants,
+- Different product categories with flexible parameters,
+- Different product variants with dynamic querying,
 - Shopping cart,
-- Product images with ability to set main image.
+- Product images with ability to set main image,
+- User accounts management - registration, logging in, logging out, account activation by email, 
+                             password reset by email.
+- Order processing - with or without(email confirmation required) logging in,
+- Comments and ratings for products,
 
 <h3>To be implemented:</h3>
-- User account management,
-- Order processing,
-- Comments and ratings for products,
+- Comments and products filtering,
+- Product promotion,
 - Worker panel,
 - Payment processing,
 - ...
