@@ -38,8 +38,8 @@
           </a>
           <ul class="dropdown-menu">
             {% if product_types %}
-              {% for type in product_types %}
-              <li><a class="dropdown-item" href="#">{{type}}</a></li>
+              {% for key, type in product_types.items %}
+                <li><a class="dropdown-item" href="{% url 'products:type' key %}">{{type}}s</a></li>
               {% endfor %}
             {% endif %}
           </ul>

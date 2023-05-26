@@ -1,5 +1,5 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, ProductImage
+from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
+from .models import Product, PRODUCT_TYPES
 from .cart import add_to_cart, clear_cart, get_cart_products_specific_list, remove_from_cart, get_cart_status
 from .forms import RatingForm
 from django.conf import settings
@@ -86,4 +86,15 @@ def product_rate_view(request, pk):
         'form': form
     }
     return render(request, 'products/product_rate_form.html', context)
+
+
+def product_type_view(request, product_type):
+    products = get_list_or_404(Product, type=product_type)
+    type_name = PRODUCT_TYPES[str(product_type)]
+    context = {
+        'title': f"Category {type_name}s",
+        'products': products,
+        'type_name': type_name
+    }
+    return render(request, 'products/product_type.html', context)
 

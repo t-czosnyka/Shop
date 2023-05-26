@@ -17,11 +17,6 @@ PRODUCT_TYPES = {'1': 'Shoe',
                  '2': 'Suit',
                  '3': 'Shirt'}
 
-PRODUCT_TYPES_PLURALS = {'1': 'Shoes',
-                         '2': 'Suits',
-                         '3': 'Shirts'}
-
-
 class Producer(models.Model):
     name = models.CharField(max_length=50, unique=True)
     address = models.CharField(max_length=50)
@@ -87,9 +82,7 @@ class Product(models.Model):
                     continue
                 # mark value as selected if it is in query dict
                 single_object_attributes[attribute]['selected'] = query_dict.get(attribute, False) == value
-                # format attribute name string
-                attribute_name = attribute.capitalize().replace('_',' ')
-                all_attributes[attribute_name] = all_attributes.get(attribute, []) + [single_object_attributes[attribute]]
+                all_attributes[attribute] = all_attributes.get(attribute, []) + [single_object_attributes[attribute]]
                 used_values[attribute] = used_values_set.union({value})
         return all_attributes
 

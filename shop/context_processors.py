@@ -1,10 +1,10 @@
-from products.models import PRODUCT_TYPES_PLURALS
+from products.models import PRODUCT_TYPES
 from django.utils.http import urlsafe_base64_encode
 
 
 def products_context(request):
     context = dict()
-    context['product_types'] = PRODUCT_TYPES_PLURALS.values()
+    context['product_types'] = PRODUCT_TYPES
     return context
 
 
