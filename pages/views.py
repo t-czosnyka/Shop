@@ -6,8 +6,6 @@ from django.apps import apps
 def home_view(request):
     Product = apps.get_model('products', 'Product')
     products = Product.objects.all()
-    for product in products:
-        product.assign_main_img()
     context = {'products': products}
     return render(request, 'pages/home.html', context)
 

@@ -38,7 +38,6 @@ def clear_cart_view(request):
 
 def product_detail_view(request, pk):
     product = get_object_or_404(Product, pk=pk)
-    product.assign_main_img()
     # Add specific product to cart and reload the page
     if request.GET.get('add_cart', False):
         product_specific = product.get_product_specific_by_attributes(request.GET)
@@ -46,14 +45,10 @@ def product_detail_view(request, pk):
         return response
     # get product available specific products based on request GET parameters
     specific_attributes = product.get_filtered_product_specific_attributes(request.GET)
-    # get queryset of images referring this product with its main img as the first one
-    if product.main_img is not None and product.main_img.main_img is not None:
-        main_img_id = product.main_img.main_img.id
-        main_img = ProductImage.objects.filter(product=product, id=main_img_id)
-        other_img = ProductImage.objects.filter(product=product).exclude(id=main_img_id)
-        images = main_img.union(other_img)
-    else:
-        images = ProductImage.objects.filter(product=product)
+    # create list of images with main image as first object
+    main_image = product.main_image_object
+    other_images = list(product.images.exclude(id=main_image.id))
+    images = [main_image] + other_images
     # get ratings that involve a comment
     comments = product.ratings.exclude(comment="").order_by('-created')
     context = {

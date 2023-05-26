@@ -9,26 +9,27 @@
         <div class="star-rating"
            style="background-image: linear-gradient(to right, gold 0%, gold {{product.rating_percentage}}%,
            transparent {{product.rating_percentage}}%, transparent 100%); font-size: 25px;"></div>
-        <div style="font-size: 10px;">{{product.number_of_ratings}} ratings</div>
+        <div style="font-size: 10px;">{{product.number_of_ratings}} rating{{ product.number_of_ratings|pluralize }}</div>
         <!-- Big Image -->
-        {% if product.main_img_short.img.url %}
-        <figure>
-          <img class="my-2" id='currentImg' src="{{ product.main_img_short.img.url }}" class="img-fluid" alt="Picture">
-          <figcaption id='currentText'>{{ product.main_img_short.description }}</figcaption>
-        </figure>
+        {% if product.images.first %}
+          <figure>
+            <img class="my-2" id='currentImg' src="{{ product.main_image_object.img.url}}" class="img-fluid" alt="Picture">
+            <figcaption id='currentText'>{{ product.main_image_object.description }}</figcaption>
+          </figure>
         {% endif %}
         <h5 class="card-title"> {{product.price}} </h5>
         <!-- Thumbnails -->
         {% for image in images %}
           {% if image.thumbnail %}
-          <img id="thumbnail_{{image.id}}" src="{{image.thumbnail.url}}"
-               {% if image.id == product.main_img_short.id %}
-               class="img-thumbnail main-thumbnail"
-               {% else %}
-               class="img-thumbnail"
-               {% endif %}
-               alt="..."
-               onclick="showImage('{{image.img.url}}','{{image.description}}','thumbnail_{{image.id}}');">
+            <!--Add border to the first image.-->
+            {% if forloop.first %}
+                <img id="thumbnail_{{image.id}}" src="{{image.thumbnail.url}}" class="img-thumbnail main-thumbnail"
+                 alt="thumbnail"
+                 onclick="showImage('{{image.img.url}}','{{image.description}}','thumbnail_{{image.id}}');">
+            {% else %}
+                <img id="thumbnail_{{image.id}}" src="{{image.thumbnail.url}}" class="img-thumbnail" alt="thumbnail"
+                 onclick="showImage('{{image.img.url}}','{{image.description}}','thumbnail_{{image.id}}');">
+            {% endif %}
           {% endif %}
         {% endfor %}
         <!-- Specific attributes -->
@@ -36,14 +37,14 @@
          changed, showing available products with selected attributes -->
         <form method="GET" action="#form" id="form" class="my-4">
           {% for attribute, values in specific_attributes.items %}
-            <label for="{{attribute}}" class="form-label">{{attribute}}:</label>
+            <label for="{{attribute}}" class="form-label">{{attribute|capfirst}}:</label>
             <select class="form-select" name="{{attribute}}" id="{{attribute}}" onchange="this.form.submit()">
               <option value="">No selection</option>
               {% for value in values %}
                 {% if value.selected %}
-                <option value="{{value.value}}" selected>{{value.display}}</option>
+                  <option value="{{value.value}}" selected>{{value.display}}</option>
                 {% else %}
-                <option value="{{value.value}}">{{value.display}}</option>
+                  <option value="{{value.value}}">{{value.display}}</option>
                 {% endif %}
               {% endfor %}
             </select>
@@ -87,8 +88,8 @@
     </div>
 
 
+<!-- Change picture after clicking on thumbnail.-->
 <script type="text/javascript">
-
 function showImage(imgPath, imgText, thumbClicked) {
     var curImage = document.getElementById('currentImg');
     var curText = document.getElementById('currentText');
@@ -103,9 +104,9 @@ function showImage(imgPath, imgText, thumbClicked) {
     curImage.src = imgPath;
     curText.innerText = imgText;
  }
-
 </script>
 
+<!--Set main thumbnail after page is loaded.-->
 <script type="text/javascript">
 document.addEventListener("DOMContentLoaded", () => {
   var mainThumb = document.getElementById("card").getElementsByClassName("main-thumbnail");
@@ -116,6 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<!--Add additional hidden field to form and change action when add to cart is clicked.-->
 <script type="text/javascript">
 function addCart(){
   var form = document.getElementById('form');
@@ -126,7 +128,6 @@ function addCart(){
   form.appendChild(hiddenField);
   document.body.appendChild(form);
   form.action = '#';
-  console.log(form);
   form.submit()
 }
 </script>

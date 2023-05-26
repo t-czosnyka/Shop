@@ -49,12 +49,12 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-    def assign_main_img(self):
-        # assigns main_img_short attribute to Product object from ProductMainImage if present or first available image
-        if self.main_img is not None and self.main_img.main_img is not None:
-            self.main_img_short = ProductImage.objects.get(id=self.main_img.main_img.id)
-        else:
-            self.main_img_short = ProductImage.objects.filter(product=self).first()
+    @property
+    def main_image_object(self):
+        # Return main image object if assigned or first available image.
+        if self.main_img.main_img is not None:
+            return self.main_img.main_img
+        return self.images.first()
 
     def get_filtered_product_specific_attributes(self, query_dict):
         # Method filters ProductSpecific objects referencing this Product with parameters from query_dict
