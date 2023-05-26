@@ -1,7 +1,7 @@
 <a class="link-offset-2 link-underline link-underline-opacity-0" href="{% url 'products:detail' product.id %}">
     <div class="card text-bg-secondary mb-3 border-dark" style="width: 18rem;" >
         {% if product.images.first %}
-            <img src="{{ product.main_image_object.img.url }}" style="height: 20rem;" class="img-card" alt="Main Image">
+            <img src="{{ product.main_image_object.img.url }}" style="height: 20rem; background-color:white;" class="img-card" alt="Main Image">
         {% endif %}
         <div class="card-body">
             <h5 class="card-title">{{product.name}}</h5>
