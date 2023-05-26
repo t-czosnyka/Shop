@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load replace %}
 {% block content %}
 
     <div class="card mt-5">
@@ -37,7 +38,7 @@
          changed, showing available products with selected attributes -->
         <form method="GET" action="#form" id="form" class="my-4">
           {% for attribute, values in specific_attributes.items %}
-            <label for="{{attribute}}" class="form-label">{{attribute|capfirst}}:</label>
+            <label for="{{attribute}}" class="form-label">{{attribute|capfirst|replace:"_"}}:</label>
             <select class="form-select" name="{{attribute}}" id="{{attribute}}" onchange="this.form.submit()">
               <option value="">No selection</option>
               {% for value in values %}

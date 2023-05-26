@@ -13,7 +13,6 @@ from django.apps import apps
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseNotFound
 from django.conf import settings
 from .token_generator import account_activation_token_generator
-import datetime
 from django.utils import timezone
 
 
