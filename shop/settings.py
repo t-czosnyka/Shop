@@ -136,6 +136,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -166,4 +167,4 @@ EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
 
 PASSWORD_RESET_TIMEOUT = 5*60
 ACCOUNT_ACTIVATION_TIMEOUT = 60*60*24
-ORDER_CONFIRMATION_TIMEOUT = 60
+ORDER_CONFIRMATION_TIMEOUT = 60*60*24
