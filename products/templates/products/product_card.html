@@ -6,7 +6,12 @@
         <div class="card-body">
             <h5 class="card-title">{{product.name}}</h5>
             <div class="card-text fs-6">{{product.description|truncatechars:28}}</div>
-            <div class="fs-4">{{product.price}}</div>
+            {% if product.discount %}
+              <div><s class="fs-7">{{product.price}}</s> <b class="fs-4">{{product.current_price}}</b></div>
+              <div>Now {{product.discount}}% cheaper!</div>
+            {% else %}
+                <div class="fs-4">{{product.price}}</div>
+            {% endif %}
             <div class="star-rating"
                  style="background-image: linear-gradient(to right, gold 0%, gold {{product.rating_percentage}}%,
                  transparent {{product.rating_percentage}}%, transparent 100%);"></div>

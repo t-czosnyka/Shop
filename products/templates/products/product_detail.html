@@ -18,7 +18,12 @@
             <figcaption id='currentText'>{{ product.main_image_object.description }}</figcaption>
           </figure>
         {% endif %}
-        <h5 class="card-title"> {{product.price}} </h5>
+        {% if product.discount %}
+          <div class="mb-3 card-title"> <s class="fs-5">{{product.price}}</s>  <b class="fs-3">{{product.current_price}}</b> </div>
+          <div class="fs-5 mb-3" >Now {{product.discount}}% cheaper!</div>
+        {% else %}
+          <div class="fs-3 mb-3 card-title"> <b>{{product.price}}</b> </div>
+        {% endif %}
         <!-- Thumbnails -->
         {% for image in images %}
           {% if image.thumbnail %}

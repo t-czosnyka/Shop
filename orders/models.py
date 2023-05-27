@@ -111,7 +111,7 @@ class OrderProducts(models.Model):
         if self.product_specific is not None and create:
             self.product_name = str(self.product_specific)
             try:
-                self.product_price = self.product_specific.product.price
+                self.product_price = self.product_specific.product.current_price
             except AttributeError as e:
                 pass
         super().save(**kwargs)

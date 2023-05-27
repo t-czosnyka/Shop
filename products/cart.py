@@ -81,7 +81,7 @@ def get_cart_status(request):
         product_id, product_specific_id = full_id.split('_')
         product_specific = Product.get_product_specific(product_id, product_specific_id)
         total_amount += amount
-        total_value += amount*product_specific.product.price
+        total_value += amount*product_specific.product.current_price
     # update cart_length session object
     request.session['cart_length'] = total_amount
     request.session['cart_value'] = str(total_value)

@@ -9,7 +9,7 @@ from django.db.models import Q, Avg
 from django.conf import settings
 from django.shortcuts import get_object_or_404, reverse
 from django.contrib.auth.models import User
-
+from django.core.validators import MaxValueValidator
 # Create your models here.
 
 # Available product types
@@ -40,6 +40,7 @@ class Product(models.Model):
     type = models.CharField(choices=TYPE_CHOICES, max_length=3)
     promoted = models.BooleanField(default=False)
     avg_rating = models.DecimalField(max_digits=2, decimal_places=1, default=0)
+    discount = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(100)])
 
     def __str__(self):
         return self.name
@@ -133,6 +134,11 @@ class Product(models.Model):
     @property
     def rating_percentage(self):
         return self.avg_rating/5*100
+
+    @property
+    def current_price(self):
+        # Calculate price after discount.
+        return round(self.price * (100-self.discount)/100,2)
 
 
 class ProductSpecific(models.Model):
