@@ -98,7 +98,15 @@ def product_rate_view(request, pk):
 
 
 def product_type_view(request, product_type):
+    ORDERING = {
+        '1': {'key': lambda x: x.current_price, 'reverse': False},  # Lowest price.
+        '2': {'key': lambda x: x.current_price, 'reverse': True},  # Highest price.
+        '3': {'key': lambda x: x.avg_rating, 'reverse': True},   # Best rating.
+        '4': {'key': lambda x: x.avg_rating, 'reverse': False}   # Worst rating.
+    }
     products = get_list_or_404(Product, type=product_type)
+    ordering = request.GET.get('order', '1')
+    products.sort(**ORDERING.get(ordering, ORDERING['1']))
     type_name = PRODUCT_TYPES[str(product_type)]
     context = {
         'title': f"Category {type_name}s",

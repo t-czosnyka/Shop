@@ -1,11 +1,29 @@
 {% extends 'base.html' %}
 {% block content %}
     <div class="container text-center">
-        <h1  class="my-4">Products in {{type_name}}s category:</h1>
-        <div class="row row-cols-3">
-            {% for product in products %}
-                {% include 'products/product_card.html'%}
-            {% endfor %}
-        </div>
+    {% if products %}
+            <div class="my-4" >
+                <h1 style="display: inline-block;">Products in {{type_name}}s category:</h1>
+                <div class="dropdown float-end" style="display: inline-block; padding: 7px 0;">
+                    <form>
+                      <select class="form-select" name="order" id="order" onchange="this.form.submit()" >
+                        <option value="" selected>Order by</option>
+                        <option value="1">Lowest price</option>
+                        <option value="2">Highest price</option>
+                        <option value="3">Best ratings</option>
+                        <option value="4">Worst ratings</option>
+                      </select>
+                    </form>
+                </div>
+            </div>
+            <div class="row row-cols-3">
+                {% for product in products %}
+                    {% include 'products/product_card.html'%}
+                {% endfor %}
+            </div>
+
+    {% else %}
+        <h1 class="my-2">No products found</h1>
+    {% endif %}
     </div>
 {% endblock %}
