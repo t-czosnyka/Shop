@@ -69,9 +69,24 @@
         <p class="card-text my-4">{{product.description}}</p>
         <!-- Naviagtion -->
         <button onclick="history.back()" class="btn btn-secondary" type="button">Go back</button>
+
+        <!-- Comments -->
         {% if comments %}
-          <div class="my-3">
-            <h6>Product comments:</h6>
+          <div class="my-3" id="comments">
+            <h5 style="display: inline-block;">Product comments:</h5>
+              <div class="dropdown float-end" style="display: inline-block;">
+                <!-- Ordering-->
+                <form action="#comments" id="form2">
+                  <select class="form-select" name="order" id="order" onchange="addOrder()" >
+                    <option value="" selected>Order by</option>
+                    <option value="1">Newest</option>
+                    <option value="2">Oldest</option>
+                    <option value="3">Highest rating</option>
+                    <option value="4">Lowest rating</option>
+                  </select>
+                </form>
+              </div>
+
             {% for comment in comments %}
               <div class="card my-3">
                 <div class="card-header d-flex">
@@ -135,6 +150,21 @@ function addCart(){
   document.body.appendChild(form);
   form.action = '#';
   form.submit()
+}
+</script>
+
+<script>
+  function addOrder(){
+  var order = document.getElementById('order');
+
+  var currentURL = window.location.href;
+  var queryString = window.location.search;
+  var newParams = new URLSearchParams(queryString);
+  newParams.set('order', order.value);
+  var newQueryString = newParams.toString();
+  var newURL = currentURL.split('?')[0] + '?' + newQueryString + '#comments';
+  window.history.replaceState(null, '', newURL);
+  window.location.reload();
 }
 </script>
 {% endblock %}

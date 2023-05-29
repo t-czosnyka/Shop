@@ -37,6 +37,12 @@ def clear_cart_view(request):
 
 
 def product_detail_view(request, pk):
+    ORDERING = {
+        '1': '-created',
+        '2': 'created',
+        '3': '-value',
+        '4': 'value',
+    }
     product = get_object_or_404(Product, pk=pk)
     # Add specific product to cart and reload the page
     if request.GET.get('add_cart', False):
@@ -50,7 +56,10 @@ def product_detail_view(request, pk):
     other_images = list(product.images.exclude(id=main_image.id))
     images = [main_image] + other_images
     # get ratings that involve a comment
-    comments = product.ratings.exclude(comment="").order_by('-created')
+    comments = product.ratings.exclude(comment="")
+    # order comments by order parameter in query dict, default from the newest to oldest
+    order = request.GET.get('order', '1')
+    comments = comments.order_by(ORDERING.get(order, '-created'))
     context = {
         'title': 'Product Detail',
         'product': product,
