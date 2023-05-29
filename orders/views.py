@@ -12,12 +12,14 @@ from django.http import HttpResponseForbidden
 from django.utils.http import urlsafe_base64_decode
 from .token_generator import order_confirmation_token_generator
 from django.http import HttpResponseNotFound
+from django.utils import timezone
 # Create your views here.
 
 UserData = apps.get_model('users', 'UserData')
 
 
 def order_data_view(request):
+    ORDER_COOLDOWN_SEC = 60
     # get order data and create order
     user_object = None
     if request.user.is_authenticated:
@@ -43,6 +45,14 @@ def order_data_view(request):
         form.initial = data
     elif request.method == "POST":
         if form.is_valid():
+            # Check if last order on this email address was created after cooldown time to prevent duplicate orders.
+            try:
+                last_order = Order.objects.filter(email=form.cleaned_data['email']).latest('created')
+                if (timezone.now() - last_order.created).seconds < ORDER_COOLDOWN_SEC:
+                    messages.warning(request, "You can't create another order so quickly.")
+                    return redirect('pages:home')
+            except ObjectDoesNotExist:
+                pass
             order_object = form.save(commit=False)
             # if user is logged in order is automatically confirmed and user is assigned
             if user_object is not None:
@@ -53,11 +63,11 @@ def order_data_view(request):
             for product in products:
                 order_product = OrderProducts(order=order_object, product_specific=product)
                 order_product.save(create=True)
-            clear_cart(request)
             order_object.send_to_user(request)
             messages.success(request, f"Your order number {order_object.id} has been created.")
             if user_object is None:
                 messages.warning(request, "You still have to confirm it using a link sent to your email.")
+            clear_cart(request)
             return redirect('pages:home')
         else:
             messages.warning(request, "Wrong data inserted.")
@@ -105,6 +115,8 @@ def order_confirm_view(request, oidb64, token):
     else:
         return HttpResponse('401 Unauthorized. Token error.', status=401)
     return redirect('pages:home')
+
+
 
 
 
