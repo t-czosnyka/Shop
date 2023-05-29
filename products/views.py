@@ -38,10 +38,10 @@ def clear_cart_view(request):
 
 def product_detail_view(request, pk):
     ORDERING = {
-        '1': '-created',
-        '2': 'created',
-        '3': '-value',
-        '4': 'value',
+        '1': '-created',  # newest
+        '2': 'created',  # oldest
+        '3': '-value',  # highest value
+        '4': 'value',   # lowest value
     }
     product = get_object_or_404(Product, pk=pk)
     # Add specific product to cart and reload the page

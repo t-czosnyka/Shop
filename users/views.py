@@ -267,12 +267,27 @@ def change_data_view(request, uidb64):
 
 
 def users_orders_list(request, uidb64):
+
+    ORDERING = {
+        '1': '-created',  # newest
+        '2': 'created',  # oldest
+        # sort by total value object property
+        '3': {'key': lambda x:x.total_value, 'reverse': True},  # highest value
+        '4':  {'key': lambda x:x.total_value, 'reverse': False},   # lowest value
+    }
     user, error_response = check_user(request, uidb64)
     if error_response is not None:
         return error_response
     orders_list = Order.objects.filter(user=user)
+    # sort orders list by their total value which is property not a field
+    ordering = request.GET.get('order', '1')
+    if ordering == '3' or ordering == '4':
+        orders_list = list(orders_list)
+        orders_list.sort(**ORDERING[ordering])
+    else:
+        orders_list = orders_list.order_by(ORDERING.get(ordering,'-created'))
     context = {
-        'title': 'Change user data',
+        'title': 'Your Orders',
         'orders_list': orders_list,
     }
     return render(request, 'users/orders.html', context)

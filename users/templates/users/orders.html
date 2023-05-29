@@ -1,6 +1,19 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="my-4">Your Orders: </h1>
+<div class="my-4">
+    <h1 style="display: inline-block;">Your orders:</h1>
+    <div class="dropdown float-end" style="display: inline-block;">
+        <form>
+          <select class="form-select" name="order" id="order" onchange="this.form.submit()" >
+            <option value="" selected>Order by</option>
+            <option value="1">Newest</option>
+            <option value="2">Oldest</option>
+            <option value="3">Highest value</option>
+            <option value="4">Lowest value</option>
+          </select>
+        </form>
+    </div>
+</div>
 <div class="mt-4">
     {% if orders_list %}
         <div class="list-group">
