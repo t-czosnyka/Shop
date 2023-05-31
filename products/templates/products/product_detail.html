@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% load replace %}
+{% load get_item %}
 {% block content %}
 
     <div class="card mt-5">
@@ -42,22 +43,18 @@
         <!-- Form created based on attributes of available specific products, submitted every time attribute value is
          changed, showing available products with selected attributes -->
         <form method="GET" action="#form" id="form" class="my-4">
-          {% for attribute, values in specific_attributes.items %}
-            <label for="{{attribute}}" class="form-label">{{attribute|capfirst|replace:"_"}}:</label>
+          {% for attribute, values in attributes.items %}
+            <label for="{{attribute}}" class="form-label">{{attribute_names|get_dict:attribute|capfirst|replace:"_"}}:</label>
             <select class="form-select" name="{{attribute}}" id="{{attribute}}" onchange="this.form.submit()">
               <option value="">No selection</option>
               {% for value in values %}
-                {% if value.selected %}
-                  <option value="{{value.value}}" selected>{{value.display}}</option>
-                {% else %}
-                  <option value="{{value.value}}">{{value.display}}</option>
-                {% endif %}
+                  <option value="{{value}}" {% selected request.GET attribute value%}>{{value}}</option>
               {% endfor %}
             </select>
           <br>
           {% endfor %}
          <!-- Add to cart button - showed when there are available products with selected attributes -->
-          {% if specific_attributes %}
+          {% if attributes %}
             <button class="btn btn-primary" type="button" onclick="addCart()">Add to cart</button>
           {% endif %}
             <a href="{% url 'products:rate' product.id%}"><button class="btn btn-primary" type="button">Rate product</button></a>

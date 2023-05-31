@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
-from .models import Product, PRODUCT_TYPES, get_product_specific_attributes
+from .models import Product, PRODUCT_TYPES, get_product_specific_model
 from .cart import add_to_cart, clear_cart, get_cart_products_specific_list, remove_from_cart, get_cart_status
 from .forms import RatingForm
 from django.conf import settings
 from django.contrib import messages
+from django.http.response import HttpResponseNotFound
 # Create your views here.
 
 
@@ -50,7 +51,10 @@ def product_detail_view(request, pk):
         response = add_to_cart(request, product_specific)
         return response
     # get product available specific products based on request GET parameters
-    specific_attributes = product.get_filtered_product_specific_attributes(request.GET)
+    attributes = product.get_filtered_product_specific_attributes(request.GET)
+    attribute_names = product.get_product_specific_model().get_attrs_names()
+    print(attributes)
+    print(attribute_names)
     # create list of images with main image as first object
     main_image = product.main_image_object
     other_images = list(product.images.exclude(id=main_image.id))
@@ -64,7 +68,8 @@ def product_detail_view(request, pk):
         'title': 'Product Detail',
         'product': product,
         'images': images,
-        'specific_attributes': specific_attributes,
+        'attributes': attributes,
+        'attribute_names': attribute_names,
         'comments': comments
                }
     return render(request, 'products/product_detail.html', context)
@@ -104,11 +109,12 @@ def product_type_view(request, product_type):
         '3': {'key': lambda x: x.avg_rating, 'reverse': True},   # Best rating.
         '4': {'key': lambda x: x.avg_rating, 'reverse': False}   # Worst rating.
     }
-    product = Product.objects.filter(type=product_type).first()
     # Get attribute values of all products of this type for filtering options.
-    ProductSpecific_model = product.get_product_specific_model()
-    all_products_specific = ProductSpecific_model.objects.all()
-    attributes = get_product_specific_attributes(all_products_specific, request.GET)
+    ProductSpecific_model = get_product_specific_model(product_type)
+    if ProductSpecific_model is None:
+        return HttpResponseNotFound("Not found.")
+    attributes = ProductSpecific_model.get_attrs_values()
+    attribute_names = ProductSpecific_model.get_attrs_names()
     # Filter products_specific with request.GET parameters
     filtered_products_specific = ProductSpecific_model.filter_with_query_dict(request.GET)
     filtered_products_ids = filtered_products_specific.values_list('product', flat=True).distinct()
@@ -122,6 +128,7 @@ def product_type_view(request, product_type):
         'products': filtered_products,
         'type_name': type_name,
         'attributes': attributes,
+        'attribute_names': attribute_names
     }
     return render(request, 'products/product_type.html', context)
 

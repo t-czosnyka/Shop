@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load replace %}
+{% load get_item %}
 {% block sidebar%}
 <div class="container-fluid">
     <div class="row flex-nowrap">
@@ -7,17 +9,13 @@
                 <span class="fs-3 d-none d-sm-inline my-3">Filter products</span>
                 <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
                     <form method="GET" id="filter_form">
-                        {% for attribute,values in attributes.items %}
-                             <legend class="my-1">{{attribute|capfirst}}</legend>
-                             {% for value in values %}
-                                    {% if value.selected %}
-                                        <input type="checkbox" name="{{attribute}}" value="{{value.value}}"
-                                               checked>&nbsp{{value.display}}<br>
-                                    {% else %}
-                                         <input type="checkbox" name="{{attribute}}" value="{{value.value}}">
-                                        &nbsp{{value.display}}<br>
-                                    {% endif %}
-                             {% endfor %}
+                        {% for attribute, values in attributes.items %}
+                             <legend class="my-1">{{attribute_names|get_dict:attribute|capfirst|replace:"_"}}</legend>
+                            {% for value in values %}
+                                     <input type="checkbox" name="{{attribute}}" value="{{value}}"
+                                     {% checked request.GET attribute value%}>
+                                    &nbsp{{value}} <br>
+                            {% endfor %}
                         {% endfor %}
                         <input type="hidden" name="order" value="{{request.GET.order}}">
                         <button type="submit" class="btn btn-secondary my-4" onclick="">Filter</button>

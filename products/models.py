@@ -1,7 +1,5 @@
 import functools
 import operator
-
-import django.http
 from django.db import models
 from django.core.exceptions import ValidationError
 import os
@@ -12,9 +10,7 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404, reverse
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator
-from django.http import QueryDict
 # Create your models here.
-
 
 # Available product types
 PRODUCT_TYPES = {'1': 'Shoe',
@@ -22,36 +18,13 @@ PRODUCT_TYPES = {'1': 'Shoe',
                  '3': 'Shirt'}
 
 
-def get_product_specific_attributes(query_set, query_dict=None):
-    # Function returns values of attributes of all ProductSpecific class objects in query_set in the form of :
-    # all_attributes = {'size': [
-    #                            {value:'42', display:'42', selected = False}
-    #                            {value:'43', display:'43', selected = True}
-    #                           ],
-    #                   'color':[
-    #                            {value:'1', display:'Black', selected = False}
-    #                            {value:'2', display:'White', selected = False}
-    #                           ]}
-    all_attributes = {}
-    used_values = {}
-    if query_dict is None:
-        query_dict = {}
-    for product_specific in query_set:
-        if not isinstance(product_specific, ProductSpecific):
-            return all_attributes
-        object_attribute_values = product_specific.get_attribute_values()
-        for attribute in object_attribute_values.keys():
-            # Check if attribute value is not already added to avoid duplicates.
-            value = object_attribute_values[attribute]['value']
-            used_values_set = used_values.get(attribute, set())
-            if value in used_values_set:
-                continue
-            # Mark value as selected if it is in query_dict.
-            object_attribute_values[attribute]['selected'] = value in query_dict.getlist(attribute, [])
-            # Add object attribute values to the list.
-            all_attributes[attribute] = all_attributes.get(attribute, []) + [object_attribute_values[attribute]]
-            used_values[attribute] = used_values_set.union({value})
-    return all_attributes
+def get_product_specific_model(product_type):
+    # Returns ProductSpecific class model based on product_type.
+    type_name = PRODUCT_TYPES.get(str(product_type), '')
+    if not type_name:
+        return None
+    model_name = "Product"+type_name
+    return globals().get(model_name, None)
 
 
 class Producer(models.Model):
@@ -95,7 +68,7 @@ class Product(models.Model):
         if self.product_specific_model is None:
             return {}
         filtered_products_specific = self.product_specific_model.filter_with_query_dict(query_dict, self)
-        return get_product_specific_attributes(filtered_products_specific, query_dict)
+        return self.product_specific_model.get_attrs_values(filtered_products_specific, product=self)
 
     def get_product_specific_by_attributes(self, query_dict):
         # returns ProductSpecific object based on query_dict passed in GET request
@@ -134,7 +107,7 @@ class Product(models.Model):
     def update_rating(self):
         calculated_avg = self.ratings.all().aggregate(Avg('value')).get('value__avg', None)
         if calculated_avg is None:
-            calculated_avg= 0
+            calculated_avg = 0
         self.avg_rating = calculated_avg
 
     @property
@@ -148,15 +121,17 @@ class Product(models.Model):
     @property
     def current_price(self):
         # Calculate price after discount.
-        return round(self.price * (100-self.discount)/100,2)
+        return round(self.price * (100-self.discount)/100, 2)
 
 
 class ProductSpecific(models.Model):
     # Abstract class for specific product models with different attributes.
-    # Product.type must match specific model TYPE, allows different variants certain product
+    # Product.type must match specific model TYPE, allows different variants certain product.
     TYPE = None
+    # attribute_field_names - unique attributes for this type of product.
     attribute_field_names = []
-    not_attribute_field_names = ['product', 'available', 'added', 'id']
+    # List of how each unique attribute should be queried.
+    attrs = []
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     available = models.BooleanField()
     added = models.DateTimeField(auto_now_add=True)
@@ -194,14 +169,6 @@ class ProductSpecific(models.Model):
             url += f'&{attribute}={value}'
         return url
 
-    def get_attribute_values(self):
-        attribute_values = {}
-        for attribute in self.attribute_field_names:
-            value = self._meta.get_field(attribute).value_to_string(self)
-            display = getattr(self, f'{attribute}')
-            attribute_values[attribute] = {'value': value, 'display': display, 'selected': False}
-        return attribute_values
-
     @classmethod
     def filter_with_query_dict(cls, query_dict, product=None):
         # Returns QuerySet of ProductSpecific objects with attributes matching those passed in query_dict. If product
@@ -211,8 +178,8 @@ class ProductSpecific(models.Model):
         if product is not None:
             query_list.append(Q(product=product))
         # Append queries from query_dict to query_list. Queries for the same attribute are connected with OR operator.
-        for attribute in cls.attribute_field_names:
-            attribute_query_list =[]
+        for attribute in cls.attrs:
+            attribute_query_list = []
             values = query_dict.getlist(attribute, [])
             for val in values:
                 if val:
@@ -222,9 +189,34 @@ class ProductSpecific(models.Model):
         # filter ProductSpecific objects with queries from query_list
         try:
             filtered = cls.objects.filter(functools.reduce(operator.and_, query_list))
-        except (ValidationError, ValueError) as e:
+        except (ValidationError, ValueError):
             filtered = {}
         return filtered
+
+    @classmethod
+    def get_attrs_values(cls, query_set=None, product=None):
+        # Returns dictionary of attribute values for products in query_set if query_set is provided or all products of
+        # this class.
+        if query_set is None:
+            query_set = cls.objects.all()
+        if product is not None:
+            query_set = query_set.filter(product=product)
+        # Get values as separate dictionaries for each object.
+        values = query_set.values(*cls.attrs)
+        combined = {}
+        # Combine dictionary values. Use set to avoid duplicates.
+        for value_dict in values:
+            for key, value in value_dict.items():
+                combined[key] = combined.get(key, set()).union([value])
+        # Cast set to list and sort values.
+        for key, values in combined.items():
+            combined[key] = sorted(list(values))
+        return combined
+
+    @classmethod
+    def get_attrs_names(cls):
+        # Return dictionary with attrs and their corresponding names.
+        return {key: value for key, value in zip(cls.attrs, cls.attribute_field_names)}
 
 
 class Color(models.Model):
@@ -243,6 +235,8 @@ class ProductShoe(ProductSpecific):
     TYPE = '1'
     # attribute_field_names - unique attributes for this type of product
     attribute_field_names = ['size', 'color']
+    # List of how each unique attribute should be queried.
+    attrs = ['size', 'color__name']
     size = models.DecimalField(max_digits=2, decimal_places=0)
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
 
@@ -254,9 +248,9 @@ class ProductShoe(ProductSpecific):
 
 
 class ProductSuit(ProductSpecific):
-    # Product type
     TYPE = '2'
     attribute_field_names = ['height_cm', 'chest_cm', 'waist_cm', 'color']
+    attrs = ['height_cm', 'chest_cm', 'waist_cm', 'color__name']
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     height_cm = models.DecimalField(max_digits=3, decimal_places=0)
     chest_cm = models.DecimalField(max_digits=3, decimal_places=0)
@@ -272,6 +266,7 @@ class ProductSuit(ProductSpecific):
 class ProductShirt(ProductSpecific):
     TYPE = '3'
     attribute_field_names = ['height_cm', 'collar_cm', 'color']
+    attrs = ['height_cm', 'collar_cm', 'color__name']
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     height_cm = models.DecimalField(max_digits=3, decimal_places=0)
     collar_cm = models.DecimalField(max_digits=3, decimal_places=0)
@@ -372,5 +367,3 @@ class Rating(models.Model):
     @property
     def value_percentage(self):
         return self.value * 20
-
-
