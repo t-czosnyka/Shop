@@ -1,29 +1,77 @@
 {% extends 'base.html' %}
-{% block content %}
-    <div class="container text-center">
-    {% if products %}
-            <div class="my-4" >
-                <h1 style="display: inline-block;">Products in {{type_name}}s category:</h1>
-                <div class="dropdown float-end" style="display: inline-block; padding: 7px 0;">
-                    <form>
-                      <select class="form-select" name="order" id="order" onchange="this.form.submit()" >
-                        <option value="" selected>Order by</option>
-                        <option value="1">Lowest price</option>
-                        <option value="2">Highest price</option>
-                        <option value="3">Best ratings</option>
-                        <option value="4">Worst ratings</option>
-                      </select>
+{% block sidebar%}
+<div class="container-fluid">
+    <div class="row flex-nowrap">
+        <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-dark" >
+            <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
+                <span class="fs-3 d-none d-sm-inline my-3">Filter products</span>
+                <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
+                    <form method="GET" id="filter_form">
+                        {% for attribute,values in attributes.items %}
+                             <legend class="my-1">{{attribute|capfirst}}</legend>
+                             {% for value in values %}
+                                    {% if value.selected %}
+                                        <input type="checkbox" name="{{attribute}}" value="{{value.value}}"
+                                               checked>&nbsp{{value.display}}<br>
+                                    {% else %}
+                                         <input type="checkbox" name="{{attribute}}" value="{{value.value}}">
+                                        &nbsp{{value.display}}<br>
+                                    {% endif %}
+                             {% endfor %}
+                        {% endfor %}
+                        <input type="hidden" name="order" value="{{request.GET.order}}">
+                        <button type="submit" class="btn btn-secondary my-4" onclick="">Filter</button>
                     </form>
+                </ul>
+            </div>
+        </div>
+        <div class="col py-3">
+             <div class="container text-center" style="display: inline-block; margin-left:5%">
+                {% if products %}
+                    <div class="my-4" >
+                        <h1 style="display: inline-block;">Products in {{type_name}}s category:</h1>
+                        <div class="dropdown float-end" style="display: inline-block; padding: 7px 0;">
+                            <form method="GET" id="order_form">
+                              <select class="form-select" name="order" id="order" onchange="addOrder()" >
+                                <option value="" selected>Order by</option>
+                                <option value="1">Lowest price</option>
+                                <option value="2">Highest price</option>
+                                <option value="3">Best ratings</option>
+                                <option value="4">Worst ratings</option>
+                              </select>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row row-cols-3">
+                        {% for product in products %}
+                            {% include 'products/product_card.html'%}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <h1 class="my-2">No products found</h1>
+                {% endif %}
+                </div>
+                    </div>
                 </div>
             </div>
-            <div class="row row-cols-3">
-                {% for product in products %}
-                    {% include 'products/product_card.html'%}
-                {% endfor %}
-            </div>
+<!--Add order variable to url-->
+<script>
+  function addOrder(){
+      var order = document.getElementById('order');
+      var currentURL = window.location.href;
+      var queryString = window.location.search;
+      var newParams = new URLSearchParams(queryString);
+      newParams.set('order', order.value);
+      var newQueryString = newParams.toString();
+      var newURL = currentURL.split('?')[0] + '?' + newQueryString;
+      window.history.replaceState(null, '', newURL);
+      window.location.reload();
+}
+</script>
 
-    {% else %}
-        <h1 class="my-2">No products found</h1>
-    {% endif %}
-    </div>
 {% endblock %}
+{% block content %}
+
+{% endblock %}
+

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
-from .models import Product, PRODUCT_TYPES
+from .models import Product, PRODUCT_TYPES, get_product_specific_attributes
 from .cart import add_to_cart, clear_cart, get_cart_products_specific_list, remove_from_cart, get_cart_status
 from .forms import RatingForm
 from django.conf import settings
@@ -104,14 +104,24 @@ def product_type_view(request, product_type):
         '3': {'key': lambda x: x.avg_rating, 'reverse': True},   # Best rating.
         '4': {'key': lambda x: x.avg_rating, 'reverse': False}   # Worst rating.
     }
-    products = get_list_or_404(Product, type=product_type)
+    product = Product.objects.filter(type=product_type).first()
+    # Get attribute values of all products of this type for filtering options.
+    ProductSpecific_model = product.get_product_specific_model()
+    all_products_specific = ProductSpecific_model.objects.all()
+    attributes = get_product_specific_attributes(all_products_specific, request.GET)
+    # Filter products_specific with request.GET parameters
+    filtered_products_specific = ProductSpecific_model.filter_with_query_dict(request.GET)
+    filtered_products_ids = filtered_products_specific.values_list('product', flat=True).distinct()
+    filtered_products = get_list_or_404(Product, id__in=filtered_products_ids)
+    # Ordering products
     ordering = request.GET.get('order', '1')
-    products.sort(**ORDERING.get(ordering, ORDERING['1']))
+    filtered_products.sort(**ORDERING.get(ordering, ORDERING['1']))
     type_name = PRODUCT_TYPES[str(product_type)]
     context = {
         'title': f"Category {type_name}s",
-        'products': products,
-        'type_name': type_name
+        'products': filtered_products,
+        'type_name': type_name,
+        'attributes': attributes,
     }
     return render(request, 'products/product_type.html', context)
 

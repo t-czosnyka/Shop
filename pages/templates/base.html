@@ -8,6 +8,7 @@
 
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
     {% if title %}
     <title>{{ title }}</title>
     {% else %}
@@ -31,6 +32,7 @@
 <body>
 
     {% include 'navbar.html' %}
+    {% block sidebar %} {% endblock sidebar %}
     <div class="container">
     {% if messages %}
         {% for message in messages %}
