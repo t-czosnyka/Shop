@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-3jf*hu2zq+^w=3c=uo+tf+h&5aoz*bc!5@k7-h*%l#68y(-=yv'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -159,8 +159,10 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'my.django.email1@gmail.com'
-EMAIL_HOST_PASSWORD = 'fzejokqldcrmkkfk'
+
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
 
 EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
 
@@ -168,3 +170,5 @@ EMAIL_FILE_PATH = BASE_DIR / "sent_emails"
 PASSWORD_RESET_TIMEOUT = 5*60
 ACCOUNT_ACTIVATION_TIMEOUT = 60*60*24
 ORDER_CONFIRMATION_TIMEOUT = 60*60*24
+
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
