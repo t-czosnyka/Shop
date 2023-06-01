@@ -1,3 +1,5 @@
+import math
+
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from .models import Product, PRODUCT_TYPES, get_product_specific_model
 from .cart import add_to_cart, clear_cart, get_cart_products_specific_list, remove_from_cart, get_cart_status
@@ -53,8 +55,6 @@ def product_detail_view(request, pk):
     # get product available specific products based on request GET parameters
     attributes = product.get_filtered_product_specific_attributes(request.GET)
     attribute_names = product.get_product_specific_model().get_attrs_names()
-    print(attributes)
-    print(attribute_names)
     # create list of images with main image as first object
     main_image = product.main_image_object
     other_images = list(product.images.exclude(id=main_image.id))
@@ -109,7 +109,7 @@ def product_type_view(request, product_type):
         '3': {'key': lambda x: x.avg_rating, 'reverse': True},   # Best rating.
         '4': {'key': lambda x: x.avg_rating, 'reverse': False}   # Worst rating.
     }
-    # Get attribute values of all products of this type for filtering options.
+    # Get attribute values of all products of this type.
     ProductSpecific_model = get_product_specific_model(product_type)
     if ProductSpecific_model is None:
         return HttpResponseNotFound("Not found.")
@@ -119,6 +119,16 @@ def product_type_view(request, product_type):
     filtered_products_specific = ProductSpecific_model.filter_with_query_dict(request.GET)
     filtered_products_ids = filtered_products_specific.values_list('product', flat=True).distinct()
     filtered_products = get_list_or_404(Product, id__in=filtered_products_ids)
+    # Filter products price.
+    try:
+        price_from = float(request.GET.get('price_from', ''))
+    except ValueError:
+        price_from = 0
+    try:
+        price_to = float(request.GET.get('price_to', ''))
+    except ValueError:
+        price_to = math.inf
+    filtered_products = [product for product in filtered_products if price_from <= product.current_price <= price_to]
     # Ordering products
     ordering = request.GET.get('order', '1')
     filtered_products.sort(**ORDERING.get(ordering, ORDERING['1']))

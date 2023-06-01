@@ -9,6 +9,13 @@
                 <span class="fs-3 d-none d-sm-inline my-3">Filter products</span>
                 <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">
                     <form method="GET" id="filter_form">
+                        <p><label for="price_from" class="form-label">Price from: </label>
+                        <input type="number" step="0.01" min=0 name="price_from" id="price_from"
+                        value="{{request.GET.price_from}}"></p>
+
+                        <p><label for="price_from"  class="form-label">Price to:</label>
+                        <input type="number" step="0.01" min=0 name="price_to" id="price_to"
+                        value="{{request.GET.price_to}}"></p>
                         {% for attribute, values in attributes.items %}
                              <legend class="my-1">{{attribute_names|get_dict:attribute|capfirst|replace:"_"}}</legend>
                             {% for value in values %}
@@ -30,7 +37,7 @@
                         <h1 style="display: inline-block;">Products in {{type_name}}s category:</h1>
                         <div class="dropdown float-end" style="display: inline-block; padding: 7px 0;">
                             <form method="GET" id="order_form">
-                              <select class="form-select" name="order" id="order" onchange="addOrder()" >
+                              <select class="form-select" name="order" id="order" onchange="addOrder()">
                                 <option value="" selected>Order by</option>
                                 <option value="1">Lowest price</option>
                                 <option value="2">Highest price</option>
