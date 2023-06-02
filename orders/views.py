@@ -9,13 +9,50 @@ from django.forms.models import model_to_dict
 from django.apps import apps
 from django.db.models import ObjectDoesNotExist
 from django.http import HttpResponseForbidden
-from django.utils.http import urlsafe_base64_decode
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from .token_generator import order_confirmation_token_generator
 from django.http import HttpResponseNotFound
 from django.utils import timezone
+import stripe
 # Create your views here.
 
 UserData = apps.get_model('users', 'UserData')
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+def create_checkout(request, order_object_id):
+    try:
+        order = Order.objects.get(id=order_object_id)
+    except (ValueError, ObjectDoesNotExist):
+        return None
+    # Create stripe checkout session if order is confirmed.
+    if order.confirmed:
+        line_items = []
+        for product in order.order_products.all():
+            if product.product_specific.stripe_price_id is not None:
+                line_items.append(
+                    {
+                        'price': product.product_specific.stripe_price_id,
+                        'quantity': 1
+                    }
+                )
+        success_url = request.build_absolute_uri(reverse('orders:checkout_success'))
+        cancel_url = request.build_absolute_uri(reverse('orders:checkout_cancelled'))
+        print("surl:", success_url)
+        print("curl:", cancel_url)
+        if line_items:
+            stripe_checkout_session = stripe.checkout.Session.create(
+                line_items=line_items,
+                mode="payment",
+                success_url=success_url,
+                cancel_url=cancel_url,
+                customer_email=order.email,
+            )
+            order.stripe_checkout_id = stripe_checkout_session.stripe_id
+            order.save()
+            return stripe_checkout_session.url
+    return None
 
 
 def order_data_view(request):
@@ -63,12 +100,15 @@ def order_data_view(request):
             for product in products:
                 order_product = OrderProducts(order=order_object, product_specific=product)
                 order_product.save(create=True)
-            order_object.send_to_user(request)
+            checkout_session_url = create_checkout(request, order_object.id)
+            order_object.send_to_user(request,  checkout_session_url)
             messages.success(request, f"Your order number {order_object.id} has been created.")
-            if user_object is None:
-                messages.warning(request, "You still have to confirm it using a link sent to your email.")
             clear_cart(request)
-            return redirect('pages:home')
+            if  checkout_session_url is not None:
+                return redirect( checkout_session_url)
+            else:
+                messages.warning(request, "Confirm your order to checkout.")
+                return redirect('pages:home')
         else:
             messages.warning(request, "Wrong data inserted.")
     context = {
@@ -89,7 +129,7 @@ def order_detail_view(request, id):
     # Check if user is authorized to access this page.
     elif order_object.user is None or order_object.user.id != request.user.id:
         return HttpResponseForbidden(request)
-    context ={
+    context = {
         'title': 'Order details',
         'order': order_object,
     }
@@ -110,11 +150,26 @@ def order_confirm_view(request, oidb64, token):
     elif order_confirmation_token_generator.check_token(order, token):
         order.confirmed = True
         order.save()
-        messages.success(request, "Your order has been confirmed")
-        order.send_confirmation_ok_email()
+        checkout_session_url = create_checkout(request, order_id)
+        order.send_confirmation_ok_email(checkout_session_url)
+        if checkout_session_url is not None:
+            return redirect(checkout_session_url)
     else:
         return HttpResponse('401 Unauthorized. Token error.', status=401)
     return redirect('pages:home')
+
+
+def checkout_successful_view(request):
+    return render(request, 'orders/checkout_successful.html')
+
+
+def checkout_cancelled_view(request):
+    return render(request, 'orders/checkout_cancelled.html')
+
+
+
+
+
 
 
 

@@ -10,12 +10,15 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404, reverse
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator
+import stripe
 # Create your models here.
 
 # Available product types
 PRODUCT_TYPES = {'1': 'Shoe',
                  '2': 'Suit',
                  '3': 'Shirt'}
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
 def get_product_specific_model(product_type):
@@ -97,12 +100,19 @@ class Product(models.Model):
     def get_product_specific_by_id(self, product_specific_id):
         return get_object_or_404(self.product_specific_model, product=self, id=product_specific_id)
 
-    def get_product_specific_model(self):
+    def get_product_specific_set(self):
         type_name = PRODUCT_TYPES.get(self.type, '').lower()
         if type_name == '':
             return None
         product_specific_set_name = f"product{type_name}_set"
-        return getattr(self, product_specific_set_name).model
+        return getattr(self, product_specific_set_name)
+
+    def get_product_specific_model(self):
+        product_specific_set = self.get_product_specific_set()
+        if product_specific_set is not None:
+            return product_specific_set.model
+        else:
+            return None
 
     def update_rating(self):
         calculated_avg = self.ratings.all().aggregate(Avg('value')).get('value__avg', None)
@@ -123,6 +133,15 @@ class Product(models.Model):
         # Calculate price after discount.
         return round(self.price * (100-self.discount)/100, 2)
 
+    def save(self, **kwargs):
+        super().save(**kwargs)
+        # Update stripe prices of product specific
+        product_specific_set = self.get_product_specific_set()
+        for product_specific in product_specific_set:
+            product_specific.update_stripe_price()
+            product_specific.save()
+
+
 
 class ProductSpecific(models.Model):
     # Abstract class for specific product models with different attributes.
@@ -135,6 +154,9 @@ class ProductSpecific(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     available = models.BooleanField()
     added = models.DateTimeField(auto_now_add=True)
+
+    stripe_product_id = models.CharField(max_length=220, null=True, blank=True)
+    stripe_price_id = models.CharField(max_length=220, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -154,7 +176,17 @@ class ProductSpecific(models.Model):
 
     def save(self, **kwargs):
         self.validate_type()
+        stripe_product_object = stripe.Product.create(name=str(self))
+        self.stripe_product_id = stripe_product_object.stripe_id
+        self.update_stripe_price()
         super().save(**kwargs)
+
+    def update_stripe_price(self):
+        if self.stripe_product_id is not None:
+            stripe_price_object = stripe.Price.create(currency="pln", product=self.stripe_product_id,
+                                                      unit_amount=int(self.product.current_price*100))
+            self.stripe_price_id = stripe_price_object.stripe_id
+
 
     def get_full_id(self):
         # return tuple containing referred general Product.id,ProductSpecific.id

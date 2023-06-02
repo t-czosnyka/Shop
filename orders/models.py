@@ -32,6 +32,7 @@ class Order(models.Model):
     postal_code = models.CharField(max_length=50)
     status = models.CharField(choices=STATUS_CHOICES, default=WAIT_PAYMENT, max_length=40)
     confirmed = models.BooleanField(default=False)
+    stripe_checkout_id = models.CharField(max_length=220, blank=True, null=True)
 
     def __str__(self):
         return f"{self.id}-{self.email}"
@@ -54,19 +55,17 @@ class Order(models.Model):
             order_data.append(field)
         return order_data
 
-    def get_order_products(self):
-        return self.order_products.all()
-
-    def send_to_user(self, request):
-        # Send email to user with order data and confirmation link if necessary.
+    def send_to_user(self, request, checkout_url=None):
+        # Send email to user with order data and confirmation link if necessary. If order is already confirmed send
+        # checkout_url to complete payment.
         subject = f"Your Order nr: {self.id}"
         message = f"Your order number {self.id} has been created. Order data:\n"
         for data in self.get_order_data():
             message += f"{data[0]}: {data[1]}\n"
         message += "List of products: \n"
         i = 1
-        for product in self.get_order_products():
-            message += f"{i}. " + str(product.product_specific)
+        for product in self.order_products.all():
+            message += f"{i}. {str(product.product_specific)}\n"
         if not self.confirmed:
             oidb64 = urlsafe_base64_encode(str(self.id).encode())
             token = order_confirmation_token_generator.make_token(self)
@@ -74,11 +73,17 @@ class Order(models.Model):
             message += f"\nYour order is not confirmed. Follow this link to confirm it:\n"
             message += url
             subject += " (Unconfirmed)"
+        elif checkout_url is not None:
+            message += f"\nYour order is confirmed. Link to payment:\n"
+            message += checkout_url
         send_mail(subject=subject, message=message, from_email="Django MyShop", recipient_list=[self.email])
 
-    def send_confirmation_ok_email(self):
+    def send_confirmation_ok_email(self, checkout_url):
         subject = f"Your Order nr: {self.id} is now confirmed."
         message = f"Your order has been successfully confirmed."
+        if checkout_url is not None:
+            message += f"\nLink to payment:\n"
+            message += checkout_url
         send_mail(subject=subject, message=message, from_email="Django MyShop", recipient_list=[self.email])
 
     @property
