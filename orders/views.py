@@ -9,11 +9,12 @@ from django.forms.models import model_to_dict
 from django.apps import apps
 from django.db.models import ObjectDoesNotExist
 from django.http import HttpResponseForbidden
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_decode
 from .token_generator import order_confirmation_token_generator
 from django.http import HttpResponseNotFound
 from django.utils import timezone
 import stripe
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 
 UserData = apps.get_model('users', 'UserData')
@@ -104,8 +105,8 @@ def order_data_view(request):
             order_object.send_to_user(request,  checkout_session_url)
             messages.success(request, f"Your order number {order_object.id} has been created.")
             clear_cart(request)
-            if  checkout_session_url is not None:
-                return redirect( checkout_session_url)
+            if checkout_session_url is not None:
+                return redirect(checkout_session_url)
             else:
                 messages.warning(request, "Confirm your order to checkout.")
                 return redirect('pages:home')
@@ -118,8 +119,8 @@ def order_data_view(request):
     return render(request, 'orders/order_data.html', context)
 
 
-def order_detail_view(request, id):
-    order_object = get_object_or_404(Order, id=id)
+def order_detail_view(request, pk):
+    order_object = get_object_or_404(Order, pk=pk)
     # Check if user is authenticated.
     if not request.user.is_authenticated:
         # redirect to login page
@@ -140,7 +141,7 @@ def order_confirm_view(request, oidb64, token):
     # Get order from base 64 encoded oidb64.
     try:
         order_id = urlsafe_base64_decode(oidb64)
-        order = Order.objects.get(id = order_id)
+        order = Order.objects.get(id=order_id)
     except (ValueError, ObjectDoesNotExist):
         return HttpResponseNotFound(request)
 
@@ -167,11 +168,34 @@ def checkout_cancelled_view(request):
     return render(request, 'orders/checkout_cancelled.html')
 
 
-
-
-
-
-
-
-
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        # Invalid payload
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return HttpResponse(status=400)
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        data_object = event['data']['object']
+        email = data_object.get('customer_email')
+        checkout_id = data_object.get('id')
+        try:
+            order_object = Order.objects.get(email=email, stripe_checkout_id=checkout_id)
+        except ObjectDoesNotExist:
+            # No object found.
+            return HttpResponse(status=400)
+        # Change order status and send email confirmation to user.
+        order_object.status = order_object.WAIT_SENDING
+        order_object.save()
+        order_object.send_payment_ok_email()
+    return HttpResponse(status=200)
 

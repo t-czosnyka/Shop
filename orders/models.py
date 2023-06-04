@@ -86,6 +86,11 @@ class Order(models.Model):
             message += checkout_url
         send_mail(subject=subject, message=message, from_email="Django MyShop", recipient_list=[self.email])
 
+    def send_payment_ok_email(self):
+        subject = f"Order nr: {self.id} payment was successful."
+        message = f"Payment for order nr: {self.id} was received.\nYour Django MyShop team."
+        send_mail(subject=subject, message=message, from_email="Django MyShop", recipient_list=[self.email])
+
     @property
     def total_value(self):
         value = 0
