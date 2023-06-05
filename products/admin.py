@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Product, ProductShoe, Producer, Color, ProductSuit, ProductShirt,\
-    ProductImage, ProductMainImage, Rating, ProductSpecific
+    ProductImage, ProductMainImage, Rating
 from django.forms import ModelForm
 from django.db.models import ObjectDoesNotExist
 
@@ -27,6 +27,7 @@ class ProductSpecificAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     readonly_fields = ('stripe_product_id', 'stripe_price_id')
+
 
 # Filter ProductImages only referring to set Product.
 class MainImageForm(ModelForm):

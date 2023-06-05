@@ -45,7 +45,7 @@ class Order(models.Model):
                 f_name = 'get_' + field.name + '_display'
                 display = getattr(self, f_name)
                 value = display()
-            if name.lower() in ['id', 'user', 'created', 'modified']:
+            if name.lower() in ['id', 'user', 'created', 'modified', 'stripe checkout id']:
                 continue
             yield (name, value)
 
