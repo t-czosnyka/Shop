@@ -118,7 +118,7 @@ def product_type_view(request, product_type):
     # Filter products_specific with request.GET parameters
     filtered_products_specific = ProductSpecific_model.filter_with_query_dict(request.GET)
     filtered_products_ids = filtered_products_specific.values_list('product', flat=True).distinct()
-    filtered_products = get_list_or_404(Product, id__in=filtered_products_ids)
+    filtered_products = Product.objects.filter(id__in=filtered_products_ids)
     # Filter products price.
     try:
         price_from = float(request.GET.get('price_from', ''))
