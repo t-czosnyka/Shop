@@ -57,8 +57,11 @@ def product_detail_view(request, pk):
     attribute_names = product.get_product_specific_model().get_attrs_names()
     # create list of images with main image as first object
     main_image = product.main_image_object
-    other_images = list(product.images.exclude(id=main_image.id))
-    images = [main_image] + other_images
+    if main_image is not None:
+        other_images = list(product.images.exclude(id=main_image.id))
+        images = [main_image] + other_images
+    else:
+        images = None
     # get ratings that involve a comment
     comments = product.ratings.exclude(comment="")
     # order comments by order parameter in query dict, default from the newest to oldest
