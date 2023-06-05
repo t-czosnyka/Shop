@@ -26,6 +26,8 @@ class ProductSpecificAdmin(admin.ModelAdmin):
             kwargs["queryset"] = Product.objects.filter(type=self.model.TYPE)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    readonly_fields = ('stripe_product_id', 'stripe_price_id')
+
 # Filter ProductImages only referring to set Product.
 class MainImageForm(ModelForm):
     def __init__(self, *args, **kwargs):
