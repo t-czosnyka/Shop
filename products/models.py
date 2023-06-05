@@ -105,7 +105,7 @@ class Product(models.Model):
         if type_name == '':
             return None
         product_specific_set_name = f"product{type_name}_set"
-        return getattr(self, product_specific_set_name)
+        return getattr(self, product_specific_set_name).all()
 
     def get_product_specific_model(self):
         product_specific_set = self.get_product_specific_set()
@@ -137,10 +137,10 @@ class Product(models.Model):
         super().save(**kwargs)
         # Update stripe prices of product specific
         product_specific_set = self.get_product_specific_set()
-        for product_specific in product_specific_set:
-            product_specific.update_stripe_price()
-            product_specific.save()
-
+        if product_specific_set is not None:
+            for product_specific in product_specific_set:
+                product_specific.update_stripe_price()
+                product_specific.save()
 
 
 class ProductSpecific(models.Model):
@@ -186,7 +186,6 @@ class ProductSpecific(models.Model):
             stripe_price_object = stripe.Price.create(currency="pln", product=self.stripe_product_id,
                                                       unit_amount=int(self.product.current_price*100))
             self.stripe_price_id = stripe_price_object.stripe_id
-
 
     def get_full_id(self):
         # return tuple containing referred general Product.id,ProductSpecific.id
