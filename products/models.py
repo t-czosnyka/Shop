@@ -222,7 +222,8 @@ class ProductSpecific(models.Model):
         try:
             filtered = cls.objects.filter(functools.reduce(operator.and_, query_list))
         except (ValidationError, ValueError):
-            filtered = {}
+            # Wrong filtering parameters - return empty queryset.
+            filtered = cls.objects.none()
         return filtered
 
     @classmethod
