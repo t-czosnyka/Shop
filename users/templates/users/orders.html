@@ -18,7 +18,7 @@
     {% if orders_list %}
         <div class="list-group">
         {% for order in orders_list %}
-            <a href="{% url 'orders:detail' order.id %}"><button type="button" class="list-group-item list-group-item-action list-group-item-info">
+            <a href="{{ order.get_absolute_url }}"><button type="button" class="list-group-item list-group-item-action list-group-item-info">
                 Order number: <b>{{order.id}}</b> <div class="d-flex justify-content-end">  {{order.created}}</div>
                 <div>Items: {{order.total_items}}  Items Value: <b>{{order.total_value}}</b></div></button></a>
         {% endfor %}

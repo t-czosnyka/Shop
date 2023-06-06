@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from .token_generator import order_confirmation_token_generator
 from django.utils.http import urlsafe_base64_encode
+from django.shortcuts import reverse
 
 # Create your models here.
 
@@ -102,6 +103,9 @@ class Order(models.Model):
     @property
     def total_items(self):
         return len(self.order_products.all())
+
+    def get_absolute_url(self):
+        return reverse('orders:detail', kwargs={"pk": self.pk})
 
 
 class OrderProducts(models.Model):

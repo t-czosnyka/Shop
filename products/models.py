@@ -142,6 +142,9 @@ class Product(models.Model):
                 product_specific.update_stripe_price()
                 product_specific.save()
 
+    def get_absolute_url(self):
+        return reverse('products:detail', kwargs={"pk": self.pk})
+
 
 class ProductSpecific(models.Model):
     # Abstract class for specific product models with different attributes.
@@ -191,13 +194,13 @@ class ProductSpecific(models.Model):
         # return tuple containing referred general Product.id,ProductSpecific.id
         return f"{self.product.id}_{self.id}"
 
-    @property
-    def url_specific(self):
+    def get_absolute_url(self):
         # Return url to ProductSpecific object.
-        url = reverse('products:detail', kwargs={'pk': self.product.id})+'?'
-        for attribute in self.attribute_field_names:
-            value = self._meta.get_field(attribute).value_to_string(self)
-            url += f'&{attribute}={value}'
+        url = self.product.get_absolute_url()+'?'
+        model = type(self)
+        values = model.objects.filter(id=self.id).values(*self.attrs)
+        for key, value in values.first().items():
+            url += f'&{key}={value}'
         return url
 
     @classmethod
