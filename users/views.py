@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
+from django.shortcuts import render, redirect
 from .forms import LoginForm, UserDataForm, UserForm, ResetForm, UserChangeForm
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -20,7 +20,7 @@ from django.utils import timezone
 Order = apps.get_model('orders', 'Order')
 
 
-def get_user_from_uidb64(request, uidb64):
+def get_user_from_uidb64(uidb64):
     # decode user_id and get user
     user = None
     try:
@@ -47,7 +47,7 @@ def account_activate_view(request, uidb64, token):
         messages.warning(request, "You are already logged in.")
         return redirect('pages:home')
     # Check provided user id.
-    user = get_user_from_uidb64(request, uidb64)
+    user = get_user_from_uidb64(uidb64)
     if user is None:
         return HttpResponseNotFound
     # Check provided token.
@@ -182,7 +182,7 @@ def reset_new_password_view(request, uidb64, token):
         messages.warning(request, "You are already logged in.")
         return redirect('pages:home')
     # Check provided user id.
-    user = get_user_from_uidb64(request, uidb64)
+    user = get_user_from_uidb64(uidb64)
     if user is None:
         return HttpResponseNotFound(request)
     # Check provided token.
@@ -207,7 +207,7 @@ def reset_new_password_view(request, uidb64, token):
 def check_user(request, uidb64):
     # Get user from uidb64.
     error_response = None
-    user = get_user_from_uidb64(request, uidb64)
+    user = get_user_from_uidb64(uidb64)
     # Check if decoded user exists.
     if user is None:
         error_response = HttpResponseNotFound(request)
@@ -272,8 +272,8 @@ def users_orders_list(request, uidb64):
         '1': '-created',  # newest
         '2': 'created',  # oldest
         # sort by total value object property
-        '3': {'key': lambda x:x.total_value, 'reverse': True},  # highest value
-        '4':  {'key': lambda x:x.total_value, 'reverse': False},   # lowest value
+        '3': {'key': lambda x: x.total_value, 'reverse': True},  # highest value
+        '4':  {'key': lambda x: x.total_value, 'reverse': False},   # lowest value
     }
     user, error_response = check_user(request, uidb64)
     if error_response is not None:
@@ -285,15 +285,9 @@ def users_orders_list(request, uidb64):
         orders_list = list(orders_list)
         orders_list.sort(**ORDERING[ordering])
     else:
-        orders_list = orders_list.order_by(ORDERING.get(ordering,'-created'))
+        orders_list = orders_list.order_by(ORDERING.get(ordering, '-created'))
     context = {
         'title': 'Your Orders',
         'orders_list': orders_list,
     }
     return render(request, 'users/orders.html', context)
-
-
-
-
-
-
