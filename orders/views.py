@@ -40,8 +40,6 @@ def create_checkout(request, order_object_id):
                 )
         success_url = request.build_absolute_uri(reverse('orders:checkout_success'))
         cancel_url = request.build_absolute_uri(reverse('orders:checkout_cancelled'))
-        print("surl:", success_url)
-        print("curl:", cancel_url)
         if line_items:
             stripe_checkout_session = stripe.checkout.Session.create(
                 line_items=line_items,
