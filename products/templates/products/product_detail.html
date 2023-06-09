@@ -53,8 +53,8 @@
             </select>
           <br>
           {% endfor %}
-         <!-- Add to cart button - showed when there are available products with selected attributes -->
-          {% if attributes %}
+         <!-- Add to cart button - showed when all attributes are selected -->
+          {% if all_selected %}
             <button class="btn btn-primary" type="button" onclick="addCart()">Add to cart</button>
           {% endif %}
             <a href="{{product.get_absolute_url}}/rate"><button class="btn btn-primary" type="button">Rate product</button></a>

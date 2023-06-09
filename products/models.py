@@ -79,9 +79,9 @@ class Product(models.Model):
         if self.product_specific_model is None:
             return None
         product_specific_object = None
-        # check if all queries are not empty
-        for val in query_dict.values():
-            if not val:
+        # Check if all ProductSpecific attributes are selected and have values.
+        for attr in self.product_specific_model.attrs:
+            if attr not in query_dict or not query_dict.get(attr):
                 return None
         # filter products with passed query_dict
         filtered = self.product_specific_model.filter_with_query_dict(query_dict, self)

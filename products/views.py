@@ -47,12 +47,12 @@ def product_detail_view(request, pk):
         '4': 'value',   # lowest value
     }
     product = get_object_or_404(Product, pk=pk)
-    # Add specific product to cart and reload the page
+    product_specific = product.get_product_specific_by_attributes(request.GET)
+    # Add specific product to cart and reload the page.
     if request.GET.get('add_cart', False):
-        product_specific = product.get_product_specific_by_attributes(request.GET)
         response = add_to_cart(request, product_specific)
         return response
-    # get product available specific products based on request GET parameters
+    # Get attributes of product variants matching current selections.
     attributes = product.get_filtered_product_specific_attributes(request.GET)
     attribute_names = product.get_product_specific_model().get_attrs_names()
     # create list of images with main image as first object
@@ -73,7 +73,8 @@ def product_detail_view(request, pk):
         'images': images,
         'attributes': attributes,
         'attribute_names': attribute_names,
-        'comments': comments
+        'comments': comments,
+        'all_selected': product_specific is not None,  # check if all attribute values has been selected
                }
     return render(request, 'products/product_detail.html', context)
 
