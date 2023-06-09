@@ -14,11 +14,13 @@
 </div>
 <div>
     <h2 class="my-3">Ordered products: </h2>
-    <ul class="list-group mb-4 list-group-numbered">
+    <ul class="list-group mb-4">
           {% for product in order.order_products.all %}
-                <li class="list-group-item d-flex justify-content-start align-items-center list-group-item-info">
-                      <a href="{{product.product_specific.get_absolute_url}}"><span class="flex-grow-1">{{product.product_name}} <b>${{product.product_price}}</b></span></a>
-                </li>
+                <li class="list-group-item list-group-item-info">
+                      <a href="{{product.product_specific.get_absolute_url}}">
+                          <div>{{product.product_name}}
+                              <div class="d-flex justify-content-end">Amount: {{product.amount}}</div>
+                            Price: {{product.product_price}}</div></a></li>
           {% endfor %}
     </ul>
     <p class="fs-3"><b>Total Items: {{order.total_items}}</b></p>

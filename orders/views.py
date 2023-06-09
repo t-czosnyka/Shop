@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, reverse, get_object_or_404, HttpResponse
-from products.cart import get_cart_products_specific_all, clear_cart
+from products import cart
 from .models import Order, OrderProducts
 from django.contrib import messages
 from .forms import OrderForm
@@ -35,7 +35,7 @@ def create_checkout(request, order_object_id):
                 line_items.append(
                     {
                         'price': product.product_specific.stripe_price_id,
-                        'quantity': 1
+                        'quantity': product.amount
                     }
                 )
         success_url = request.build_absolute_uri(reverse('orders:checkout_success'))
@@ -65,7 +65,7 @@ def order_data_view(request):
         url = settings.LOGIN_URL + '?next=' + request.path + '&order=True'
         return redirect(url)
     # redirect if cart is empty
-    products = get_cart_products_specific_all(request)
+    products = cart.get_cart_products_specific_list(request)
     if len(products) == 0:
         messages.warning(request, "No products to order.")
         return redirect('pages:home')
@@ -96,13 +96,13 @@ def order_data_view(request):
                 order_object.confirmed = True
             order_object.save()
             # Create order products, not using bulk_create to call save method
-            for product in products:
-                order_product = OrderProducts(order=order_object, product_specific=product)
+            for product, amount in products:
+                order_product = OrderProducts(order=order_object, product_specific=product, amount=amount)
                 order_product.save(create=True)
             checkout_session_url = create_checkout(request, order_object.id)
             order_object.send_to_user(request,  checkout_session_url)
             messages.success(request, f"Your order number {order_object.id} has been created.")
-            clear_cart(request)
+            cart.clear_cart(request)
             if checkout_session_url is not None:
                 return redirect(checkout_session_url)
             else:

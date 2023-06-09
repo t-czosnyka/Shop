@@ -6,6 +6,7 @@ from django.core.mail import send_mail
 from .token_generator import order_confirmation_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.shortcuts import reverse
+from django.db.models import Sum
 
 # Create your models here.
 
@@ -65,8 +66,8 @@ class Order(models.Model):
             message += f"{data[0]}: {data[1]}\n"
         message += "List of products: \n"
         i = 1
-        for product in self.order_products.all():
-            message += f"{i}. {str(product.product_specific)}\n"
+        for order_product in self.order_products.all():
+            message += f"{i}. {str(order_product.product_specific)}\n {order_product.amount}"
         if not self.confirmed:
             oidb64 = urlsafe_base64_encode(str(self.id).encode())
             token = order_confirmation_token_generator.make_token(self)
@@ -102,7 +103,7 @@ class Order(models.Model):
 
     @property
     def total_items(self):
-        return len(self.order_products.all())
+        return self.order_products.all().aggregate(Sum('amount')).get('amount__sum',0)
 
     def get_absolute_url(self):
         return reverse('orders:detail', kwargs={"pk": self.pk})
@@ -113,7 +114,7 @@ class OrderProducts(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     product_specific = GenericForeignKey("content_type", "object_id")
-
+    amount = models.PositiveIntegerField(default=1)
     product_name = models.CharField(max_length=100, default='', blank=True)
     product_price = models.DecimalField(default=0, blank=True, max_digits=10, decimal_places=2)
 
@@ -121,12 +122,13 @@ class OrderProducts(models.Model):
         verbose_name_plural = "OrderProducts"
 
     def save(self, create=False, **kwargs):
-        # save current product name and price in database(in case price changes in the future)
+        # Save current product name and price in database(in case price changes in the future).
+        # Only during order creation - create=True.
         if self.product_specific is not None and create:
             self.product_name = str(self.product_specific)
             try:
                 self.product_price = self.product_specific.product.current_price
-            except AttributeError as e:
+            except AttributeError:
                 pass
         super().save(**kwargs)
 
