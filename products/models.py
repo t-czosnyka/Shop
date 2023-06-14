@@ -16,7 +16,8 @@ import stripe
 # Available product types
 PRODUCT_TYPES = {'1': 'Shoe',
                  '2': 'Suit',
-                 '3': 'Shirt'}
+                 '3': 'Shirt',
+                 '4': 'Backpack',}
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -253,9 +254,19 @@ class ProductSpecific(models.Model):
         # Return dictionary with attrs and their corresponding names.
         return {key: value for key, value in zip(cls.attrs, cls.attribute_field_names)}
 
+# Choice models implemented as separate tables.
+
 
 class Color(models.Model):
     # Table containing product colors.
+    name = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Waterproof(models.Model):
+    # Table containing information if product is waterproof.
     name = models.CharField(max_length=20, unique=True)
 
     def __str__(self):
@@ -311,6 +322,24 @@ class ProductShirt(ProductSpecific):
 
     def __str__(self):
         return f"{self.product.name} Color: {self.color}, Size: {self.height_cm}, {self.collar_cm}"
+
+
+class ProductBackpack(ProductSpecific):
+    TYPE = '4'
+    attribute_field_names = ['color', 'waterproof']
+    attrs = ['color__name', 'waterproof__name']
+
+    color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
+    waterproof = models.ForeignKey(Waterproof, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        unique_together = ('product', 'color', 'waterproof')
+
+    def __str__(self):
+        product_str = f"{self.product.name}, Color: {self.color}"
+        if self.waterproof.name == "Yes":
+            product_str += " Waterproof"
+        return product_str
 
 
 def get_image_path(instance, filename):

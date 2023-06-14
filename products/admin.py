@@ -1,12 +1,13 @@
 from django.contrib import admin
 from .models import Product, ProductShoe, Producer, Color, ProductSuit, ProductShirt,\
-    ProductImage, ProductMainImage, Rating
+    ProductImage, ProductMainImage, Rating, ProductBackpack, Waterproof
 from django.forms import ModelForm
 from django.db.models import ObjectDoesNotExist
 
 # Register your models here.
 admin.site.register(Producer)
 
+admin.site.register(Waterproof)
 admin.site.register(Color)
 admin.site.register(Rating)
 
@@ -49,4 +50,5 @@ admin.site.register(Product, ProductAdmin)
 admin.site.register(ProductShoe, ProductSpecificAdmin)
 admin.site.register(ProductSuit, ProductSpecificAdmin)
 admin.site.register(ProductShirt, ProductSpecificAdmin)
+admin.site.register(ProductBackpack, ProductSpecificAdmin)
 admin.site.register(ProductMainImage, ProductMainImageAdmin)
