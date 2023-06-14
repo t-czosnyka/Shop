@@ -1,16 +1,18 @@
 <h1>MyShop</h1>
 
-<p>My Django framework training project - e-commerce application for clothing store.</p>
+<p>My Django framework training project - e-commerce application for a clothing store.</p>
+<p>See live on: https://eu.pythonanywhere.com/user/tczosnyka</p>
 
-<p>**Still under construction.**</p>
-
+<h2>Description:</h2>
 <p> Application allows different categories of products. Each category of product can have unique attributes.
 One product can also have different variants e.g. color, size. The user can select a product feature, like color, 
 and the application will dynamically filter available product variants with this feature. When all features
-are selected product may be added to the cart and then ordered.
-User accounts are implemented. Logged-in user can rate and comment on products, view past orders and have order data
+are selected product may be added to the cart and then ordered.</p>
+<p>User accounts are implemented. Logged-in user can rate and comment on products, view past orders and have order data
 filled in automatically. Accounts must be confirmed by activation link sent on provided email address. Password reset
 is possible by email.</p>
+<p>Orders can be placed without logging in. In this case order confirmation by email is required. 
+When order is confirmed payment through Stripe API is possible. Payment link is also send to user email address.</p>
 
 <p> While the frontend is not the primary focus of this project, Bootstrap 5 and some basic JS
 is used to make it look nicer.</p>
@@ -26,16 +28,11 @@ is used to make it look nicer.</p>
   <li>User accounts management - registration, logging in, logging out, account activation by email, 
                               password reset by email,</li>
   <li>Order processing - with or without(email confirmation required) logging in,</li>
-  <li>Comments and ratings for products.</li>
+  <li>Comments and ratings for products,</li>
+  <li>Product category pages,</li>
+  <li>Comments and products ordering and filtering,</li>
+  <li>Payment processing with Stripe API.</li>
 </ul>
-
-<h3>To be implemented:</h3>
-<ul>
-  <li>Comments and products filtering,</li>
-  <li>Product promotion,</li>
-  <li>Worker panel,</li>
-  <li>Payment processing.</li>
-</ul>  
 
 <h2>Screenshots:</h2>
 
