@@ -5,18 +5,11 @@ from django.apps import apps
 
 def home_view(request):
     Product = apps.get_model('products', 'Product')
-    products = Product.objects.all()
+    # Get 9 promoted products in random order to display on home page.
+    products = Product.objects.filter(promoted=True).order_by("?")[:9]
     context = {'products': products}
     return render(request, 'pages/home.html', context)
 
 
-def about_view(request):
-    context = {}
-    return render(request, 'pages/about.html', context)
-
-
-def contact_view(request):
-    context = {}
-    return render(request, 'pages/contact.html', context)
 
 
