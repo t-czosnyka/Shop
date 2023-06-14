@@ -52,10 +52,12 @@ INSTALLED_APPS = [
     'pages',
     'users',
     'orders',
+    'api',
 
     #other
-    "crispy_forms",
-    "crispy_bootstrap4",
+    'crispy_forms',
+    'crispy_bootstrap4',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

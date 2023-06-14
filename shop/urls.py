@@ -25,6 +25,7 @@ urlpatterns = [
     path('orders/', include('orders.urls')),
     path('users/', include('users.urls')),
     path('', include('pages.urls')),
+    path('api/', include('api.urls')),
 ]
 #img patterns
 if settings.DEBUG:
