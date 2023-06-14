@@ -54,7 +54,7 @@ def product_detail_view(request, pk):
         return response
     # Get attributes of product variants matching current selections.
     attributes = product.get_filtered_product_specific_attributes(request.GET)
-    attribute_names = product.get_product_specific_model().get_attrs_names()
+    attribute_names = product.get_product_specific_model().get_lookup_names()
     # create list of images with main image as first object
     main_image = product.main_image_object
     if main_image is not None:
@@ -117,8 +117,8 @@ def product_type_view(request, product_type):
     ProductSpecific_model = get_product_specific_model(product_type)
     if ProductSpecific_model is None:
         return HttpResponseNotFound("Not found.")
-    attributes = ProductSpecific_model.get_attrs_values()
-    attribute_names = ProductSpecific_model.get_attrs_names()
+    attributes = ProductSpecific_model.get_attribute_values()
+    attribute_names = ProductSpecific_model.get_lookup_names()
     # Filter products_specific with request.GET parameters
     filtered_products_specific = ProductSpecific_model.filter_with_query_dict(request.GET)
     filtered_products_ids = filtered_products_specific.values_list('product', flat=True).distinct()

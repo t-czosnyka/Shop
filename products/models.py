@@ -72,7 +72,7 @@ class Product(models.Model):
         if self.product_specific_model is None:
             return {}
         filtered_products_specific = self.product_specific_model.filter_with_query_dict(query_dict, self)
-        return self.product_specific_model.get_attrs_values(filtered_products_specific, product=self)
+        return self.product_specific_model.get_attribute_values(filtered_products_specific, product=self)
 
     def get_product_specific_by_attributes(self, query_dict):
         # returns ProductSpecific object based on query_dict passed in GET request
@@ -81,7 +81,7 @@ class Product(models.Model):
             return None
         product_specific_object = None
         # Check if all ProductSpecific attributes are selected and have values.
-        for attr in self.product_specific_model.attrs:
+        for attr in self.product_specific_model.attribute_lookups:
             if attr not in query_dict or not query_dict.get(attr):
                 return None
         # filter products with passed query_dict
@@ -154,7 +154,7 @@ class ProductSpecific(models.Model):
     # attribute_field_names - unique attributes for this type of product.
     attribute_field_names = []
     # List of how each unique attribute should be queried.
-    attrs = []
+    attribute_lookups = []
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     available = models.BooleanField()
     added = models.DateTimeField(auto_now_add=True)
@@ -199,7 +199,7 @@ class ProductSpecific(models.Model):
         # Return url to ProductSpecific object.
         url = self.product.get_absolute_url()+'?'
         model = type(self)
-        values = model.objects.filter(id=self.id).values(*self.attrs)
+        values = model.objects.filter(id=self.id).values(*self.attribute_lookups)
         for key, value in values.first().items():
             url += f'&{key}={value}'
         return url
@@ -213,12 +213,12 @@ class ProductSpecific(models.Model):
         if product is not None:
             query_list.append(Q(product=product))
         # Append queries from query_dict to query_list. Queries for the same attribute are connected with OR operator.
-        for attribute in cls.attrs:
+        for lookup in cls.attribute_lookups:
             attribute_query_list = []
-            values = query_dict.getlist(attribute, [])
+            values = query_dict.getlist(lookup, [])
             for val in values:
                 if val:
-                    attribute_query_list.append(Q(**{f"{attribute}": val}))
+                    attribute_query_list.append(Q(**{f"{lookup}": val}))
             if len(attribute_query_list):
                 query_list.append(functools.reduce(operator.or_, attribute_query_list))
         # filter ProductSpecific objects with queries from query_list
@@ -230,7 +230,7 @@ class ProductSpecific(models.Model):
         return filtered
 
     @classmethod
-    def get_attrs_values(cls, query_set=None, product=None):
+    def get_attribute_values(cls, query_set=None, product=None):
         # Returns dictionary of attribute values for products in query_set if query_set is provided or all products of
         # this class.
         if query_set is None:
@@ -238,7 +238,7 @@ class ProductSpecific(models.Model):
         if product is not None:
             query_set = query_set.filter(product=product)
         # Get values as separate dictionaries for each object.
-        values = query_set.values(*cls.attrs)
+        values = query_set.values(*cls.attribute_lookups)
         combined = {}
         # Combine dictionary values. Use set to avoid duplicates.
         for value_dict in values:
@@ -250,9 +250,9 @@ class ProductSpecific(models.Model):
         return combined
 
     @classmethod
-    def get_attrs_names(cls):
-        # Return dictionary with attrs and their corresponding names.
-        return {key: value for key, value in zip(cls.attrs, cls.attribute_field_names)}
+    def get_lookup_names(cls):
+        # Return dictionary with attribute lookups and their names.
+        return {key: value for key, value in zip(cls.attribute_lookups, cls.attribute_field_names)}
 
 # Choice models implemented as separate tables.
 
@@ -282,7 +282,7 @@ class ProductShoe(ProductSpecific):
     # attribute_field_names - unique attributes for this type of product
     attribute_field_names = ['size', 'color']
     # List of how each unique attribute should be queried.
-    attrs = ['size', 'color__name']
+    attribute_lookups = ['size', 'color__name']
     size = models.DecimalField(max_digits=2, decimal_places=0)
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
 
@@ -296,7 +296,7 @@ class ProductShoe(ProductSpecific):
 class ProductSuit(ProductSpecific):
     TYPE = '2'
     attribute_field_names = ['height_cm', 'chest_cm', 'waist_cm', 'color']
-    attrs = ['height_cm', 'chest_cm', 'waist_cm', 'color__name']
+    attribute_lookups = ['height_cm', 'chest_cm', 'waist_cm', 'color__name']
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     height_cm = models.DecimalField(max_digits=3, decimal_places=0)
     chest_cm = models.DecimalField(max_digits=3, decimal_places=0)
@@ -312,7 +312,7 @@ class ProductSuit(ProductSpecific):
 class ProductShirt(ProductSpecific):
     TYPE = '3'
     attribute_field_names = ['height_cm', 'collar_cm', 'color']
-    attrs = ['height_cm', 'collar_cm', 'color__name']
+    attribute_lookups = ['height_cm', 'collar_cm', 'color__name']
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     height_cm = models.DecimalField(max_digits=3, decimal_places=0)
     collar_cm = models.DecimalField(max_digits=3, decimal_places=0)
@@ -327,7 +327,7 @@ class ProductShirt(ProductSpecific):
 class ProductBackpack(ProductSpecific):
     TYPE = '4'
     attribute_field_names = ['color', 'waterproof']
-    attrs = ['color__name', 'waterproof__name']
+    attribute_lookups = ['color__name', 'waterproof__name']
 
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
     waterproof = models.ForeignKey(Waterproof, on_delete=models.SET_NULL, null=True)
