@@ -1,7 +1,7 @@
 <h1>MyShop</h1>
 
 <p>My Django framework training project - e-commerce application for a clothing store.</p>
-<p>See live on: https://eu.pythonanywhere.com/user/tczosnyka</p>
+<p>See live on: https://tczosnyka.eu.pythonanywhere.com/</p>
 
 <h2>Description:</h2>
 <p> Application allows different categories of products. Each category of product can have unique attributes.
