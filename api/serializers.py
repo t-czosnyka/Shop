@@ -12,7 +12,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_product_variants(self, obj):
         qs = obj.get_product_specific_set()
-        serializer = ProductSpecificInlineSerializer(qs, many=True)
+        serializer = ProductSpecificListSerializer(qs, many=True)
         return serializer.data
 
 
@@ -22,13 +22,6 @@ class ProductSpecificDetailSerializer(serializers.ModelSerializer):
         model = None
         fields = ['product', 'available', 'added']
         read_only_fields = ['added']
-
-
-class ProductSpecificInlineSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = None
-        fields = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,9 +41,30 @@ class ProductSpecificInlineSerializer(serializers.ModelSerializer):
                 model = product.get_product_specific_model()
         if model is not None and issubclass(model, ProductSpecific):
             self.Meta.model = model
-            self.Meta.fields = self.Meta.model.attribute_field_names + ['available']
+            self.Meta.fields += self.Meta.model.attribute_field_names
+            self.Meta.read_only_fields = self.Meta.fields
         elif model is not None:
             raise TypeError("Instance is not subclass of ProductSpecific")
+
+
+class ProductSpecificListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = None
+        fields = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance is None:
+            raise TypeError("Instance required for this serializer.")
+        else:
+            single_object = self.instance
+            if isinstance(self.instance, QuerySet):
+                single_object = self.instance.first()
+        if isinstance(single_object, ProductSpecific):
+            self.Meta.model = single_object.__class__
+            self.Meta.fields = self.Meta.model.attribute_field_names + ['available']
+            self.Meta.read_only_fields = self.Meta.fields
 
     # def create(self, validated_data):
     #     if self.Meta.model is None:
