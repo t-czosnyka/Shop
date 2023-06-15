@@ -265,12 +265,16 @@ class Color(models.Model):
         return self.name
 
 
-class Waterproof(models.Model):
-    # Table containing information if product is waterproof.
-    name = models.CharField(max_length=20, unique=True)
-
-    def __str__(self):
-        return self.name
+# class Waterproof(models.Model):
+#     # Table containing information if product is waterproof.
+#
+#     name = models.CharField(max_length=20, unique=True, primary_key=True)
+#
+#     class Meta:
+#         verbose_name_plural = "Waterproof"
+#
+#     def __str__(self):
+#         return self.name
 
 # Classes inheriting from ProductSpecific must match naming pattern Product<Product.type>
 
@@ -327,17 +331,18 @@ class ProductShirt(ProductSpecific):
 class ProductBackpack(ProductSpecific):
     TYPE = '4'
     attribute_field_names = ['color', 'waterproof']
-    attribute_lookups = ['color__name', 'waterproof__name']
+    attribute_lookups = ['color__name', 'waterproof']
+    WATERPROOF_CHOICES = [("No", "No"), ("Yes", "Yes")]
 
     color = models.ForeignKey(Color, on_delete=models.SET_NULL, null=True)
-    waterproof = models.ForeignKey(Waterproof, on_delete=models.SET_NULL, null=True)
+    waterproof = models.CharField(choices=WATERPROOF_CHOICES, max_length=20)
 
     class Meta:
         unique_together = ('product', 'color', 'waterproof')
 
     def __str__(self):
         product_str = f"{self.product.name}, Color: {self.color}"
-        if self.waterproof.name == "Yes":
+        if self.waterproof == "Yes":
             product_str += " Waterproof"
         return product_str
 
