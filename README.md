@@ -37,11 +37,19 @@ is used to make it look nicer.</p>
 <h2>Screenshots:</h2>
 
 <p>Home page:</p>
-<img src="https://github.com/t-czosnyka/Shop/assets/115980948/daa6d4fd-9346-4a25-8373-700781ae6a2b" style="height:500px">
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/3f3dacd0-8db3-4c84-9a21-27e4510219df" style="height:500px">
+</br></br>
+
+<p>Shopping cart:</p>
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/b96bbe93-f4c1-42ff-8f96-faefc79dcfa2" style="height:300px">
 </br></br>
 
 <p>Product detail:</p>
 <img src="https://github.com/t-czosnyka/Shop/assets/115980948/4f66ce1c-8fb9-415f-b01c-73f0d68f5831" style="height:500px">
+</br></br>
+
+<p>Product category:</p>
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/9879730e-420c-4f83-8628-f3af452fa502" style="height:400px">
 </br></br>
 
 <p>User registation:</p>
@@ -56,20 +64,18 @@ is used to make it look nicer.</p>
 <img src="https://github.com/t-czosnyka/Shop/assets/115980948/45bf8c17-f013-4a80-a9da-c244e5f423c1" style="height:400px">
 </br></br>
 
-<p>Shopping cart:</p>
-<img src="https://github.com/t-czosnyka/Shop/assets/115980948/5870c212-3441-4752-b129-75374bbdaa83" style="height:300px">
-</br></br>
-
 <p>Orders list:</p>
 <img src="https://github.com/t-czosnyka/Shop/assets/115980948/2df95084-bc70-4ee5-85c6-8b1737a035f8" style="height:400px">
 </br></br>
 
 <p>Order detail:</p>
-<img src="https://github.com/t-czosnyka/Shop/assets/115980948/ea91bac1-2c5c-41db-838d-047bfe1a0b02" style="height:400px">
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/d37384ab-6352-4bfe-8e39-6e32cd953c86" style="height:400px">
 </br></br>
 
-<p>Product category:</p>
-<img src="https://github.com/t-czosnyka/Shop/assets/115980948/622eae71-6a9f-4596-8f45-3bc2fad71a5c" style="height:400px">
+<p>Stripe payment:</p>
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/24ad5071-7493-4955-81e8-f58d277547c9" style="height:300px">
 </br></br>
+
+
 
 
