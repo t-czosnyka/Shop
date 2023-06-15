@@ -67,7 +67,8 @@ class Order(models.Model):
         message += "List of products: \n"
         i = 1
         for order_product in self.order_products.all():
-            message += f"{i}. {str(order_product.product_specific)}\n {order_product.amount}"
+            message += f"{i}. {str(order_product.product_specific)} Amount: {order_product.amount}\n"
+            i += 1
         if not self.confirmed:
             oidb64 = urlsafe_base64_encode(str(self.id).encode())
             token = order_confirmation_token_generator.make_token(self)
