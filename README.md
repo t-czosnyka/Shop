@@ -41,7 +41,7 @@ is used to make it look nicer.</p>
 </br></br>
 
 <p>Shopping cart:</p>
-<img src="https://github.com/t-czosnyka/Shop/assets/115980948/b96bbe93-f4c1-42ff-8f96-faefc79dcfa2" style="height:300px">
+<img src="https://github.com/t-czosnyka/Shop/assets/115980948/2d740ef5-d66f-4b76-b3f2-da77885e3999" style="height:300px">
 </br></br>
 
 <p>Product detail:</p>
