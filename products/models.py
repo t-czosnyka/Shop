@@ -102,6 +102,8 @@ class Product(models.Model):
         return get_object_or_404(self.product_specific_model, product=self, id=product_specific_id)
 
     def get_product_specific_set(self):
+        if self.pk is None:
+            return None
         type_name = PRODUCT_TYPES.get(self.type, '').lower()
         if type_name == '':
             return None

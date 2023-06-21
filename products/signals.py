@@ -26,7 +26,9 @@ def create_product_main_img(sender, instance, created, **kwargs):
 @receiver(post_init, sender=Product)
 def assign_model(sender, instance, **kwargs):
     # Assign ProductSpecific class to object of Product class on init.
-    instance.product_specific_model = instance.get_product_specific_model()
+    if instance.pk is not None:
+        instance.product_specific_model = instance.get_product_specific_model()
+
 
 
 @receiver(post_save, sender=Rating)
