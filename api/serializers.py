@@ -31,7 +31,7 @@ class ProductSpecificDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = None
-        fields = ['product_url']
+        fields = ['pk', 'product', 'product_url', 'added', 'available']
         read_only_fields = ['added']
 
     def __init__(self, *args, **kwargs):
@@ -56,8 +56,7 @@ class ProductSpecificDetailSerializer(serializers.ModelSerializer):
                 model = model_class
         if model is not None and issubclass(model, ProductSpecific):
             self.Meta.model = model
-            self.Meta.fields = self.Meta.model.attribute_field_names + ['product', 'available', 'added', 'product_url']
-            self.Meta.read_only_fields = ['added']
+            self.Meta.fields += self.Meta.model.attribute_field_names
         elif model is not None:
             raise TypeError("Instance is not subclass of ProductSpecific")
 
@@ -72,7 +71,7 @@ class ProductSpecificListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = None
-        fields = ['detail_url']
+        fields = []
 
     def get_detail_url(self, obj):
         product_pk = obj.product.pk
@@ -91,7 +90,7 @@ class ProductSpecificListSerializer(serializers.ModelSerializer):
                 single_object = self.instance.first()
         if isinstance(single_object, ProductSpecific):
             self.Meta.model = single_object.__class__
-            self.Meta.fields = self.Meta.model.attribute_field_names + ['available', 'detail_url']
+            self.Meta.fields = ['pk', 'available', 'detail_url'] + self.Meta.model.attribute_field_names
             self.Meta.read_only_fields = self.Meta.fields
 
     def create(self, validated_data):
