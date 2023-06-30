@@ -1,29 +1,41 @@
 from rest_framework import serializers
 from products.models import Product, ProductSpecific
 from django.db.models.query import QuerySet
+from rest_framework.reverse import reverse
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    product_variants = serializers.SerializerMethodField()
+    product_variants = serializers.SerializerMethodField(read_only=True)
+    detail_url = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Product
-        fields = ['name', 'description', 'price', 'producer', 'type', 'avg_rating', 'current_price', 'product_variants']
+        fields = ['pk', 'name', 'description', 'price', 'producer', 'type', 'avg_rating', 'current_price',
+                  'product_variants', 'detail_url']
+        read_only_fields = ['avg_rating', 'detail_url', 'product_variants']
 
     def get_product_variants(self, obj):
         qs = obj.get_product_specific_set()
-        serializer = ProductSpecificListSerializer(qs, many=True)
+        request = self.context.get('request')
+        serializer = ProductSpecificListSerializer(qs, many=True, context={'request':request})
         return serializer.data
+
+    def get_detail_url(self, obj):
+        request = self.context.get('request')
+        return reverse('api:product-detail', kwargs={'product_pk': obj.pk}, request=request)
 
 
 class ProductSpecificDetailSerializer(serializers.ModelSerializer):
 
+    product_url = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = None
-        fields = ['product', 'available', 'added']
+        fields = ['product_url']
         read_only_fields = ['added']
 
     def __init__(self, *args, **kwargs):
+        model_class = kwargs.pop('model', None)
         super().__init__(*args, **kwargs)
         model = None
         if self.instance is not None:
@@ -36,22 +48,38 @@ class ProductSpecificDetailSerializer(serializers.ModelSerializer):
             # No instance provided. Get model based on provided product data.
             data = kwargs.get('data')
             if data is not None:
-                product_id = data.get("product")
-                product = Product.objects.get(id=product_id)
-                model = product.get_product_specific_model()
+                product_pk = data.get("product")
+                product = Product.objects.get(pk=product_pk)
+                if product is not None:
+                    model = product.get_product_specific_model()
+            elif model_class is not None:
+                model = model_class
         if model is not None and issubclass(model, ProductSpecific):
             self.Meta.model = model
-            self.Meta.fields += self.Meta.model.attribute_field_names
-            self.Meta.read_only_fields = self.Meta.fields
+            self.Meta.fields = self.Meta.model.attribute_field_names + ['product', 'available', 'added', 'product_url']
+            self.Meta.read_only_fields = ['added']
         elif model is not None:
             raise TypeError("Instance is not subclass of ProductSpecific")
+
+    def get_product_url(self, obj):
+        request = self.context.get('request')
+        return reverse('api:product-detail', kwargs={'product_pk': obj.product.pk}, request=request)
 
 
 class ProductSpecificListSerializer(serializers.ModelSerializer):
 
+    detail_url = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = None
-        fields = []
+        fields = ['detail_url']
+
+    def get_detail_url(self, obj):
+        product_pk = obj.product.pk
+        product_specific_pk = obj.pk
+        request = self.context.get('request')
+        return reverse('api:product-specific-detail',
+                       kwargs={'product_pk':product_pk, 'product_specific_pk':product_specific_pk}, request=request)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,16 +91,8 @@ class ProductSpecificListSerializer(serializers.ModelSerializer):
                 single_object = self.instance.first()
         if isinstance(single_object, ProductSpecific):
             self.Meta.model = single_object.__class__
-            self.Meta.fields = self.Meta.model.attribute_field_names + ['available']
+            self.Meta.fields = self.Meta.model.attribute_field_names + ['available', 'detail_url']
             self.Meta.read_only_fields = self.Meta.fields
-
-    # def create(self, validated_data):
-    #     if self.Meta.model is None:
-    #         product = validated_data.get('product', None)
-    #     return super().create(validated_data)
-
-    # def __new__(cls, *args, **kwargs):
-    #     return super().__new__(cls, *args, **kwargs)
 
     def create(self, validated_data):
         raise NotImplementedError("Create not allowed with this serializer.")
