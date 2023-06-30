@@ -102,6 +102,21 @@ class ProductSpecificDetailView(APIView):
         serializer = ProductSpecificDetailSerializer(product_specific, many=False, context=context)
         return Response(serializer.data)
 
+    def delete(self, request, product_pk, product_specific_pk):
+        product_specific = Product.get_product_specific(product_pk, product_specific_pk)
+        product_specific.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def put(self, request, product_pk, product_specific_pk):
+        context = {'request': request}
+        product_specific = Product.get_product_specific(product_pk, product_specific_pk)
+        serializer = ProductSpecificDetailSerializer(instance=product_specific, data=request.data, context=context)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 
