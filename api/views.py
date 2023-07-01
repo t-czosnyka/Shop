@@ -6,12 +6,14 @@ from products.models import Product
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
-
+from rest_framework import permissions
+from api.permissions import IsAdminOrReadOnly
 # Create your views here.
 
 
 class ProductListView(APIView):
     serializer_class = ProductSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
     def get(self, request):
         context = {'request': request}
@@ -34,13 +36,14 @@ class ProductDetailRenderer(BrowsableAPIRenderer):
 
     def get_context(self, data, accepted_media_type, renderer_context):
         context = super().get_context(data, accepted_media_type, renderer_context)
+        request = renderer_context.get('request')
         try:
             pk = data.get('pk')
         except AttributeError:
-            pk = None
+            context['display_edit_forms'] = False
         post_form = None
         put_form = None
-        if pk is not None:
+        if pk is not None and request.user.is_staff:
             # PUT form - Product
             product = get_object_or_404(Product, pk=pk)
             product_serializer = ProductSerializer(instance=product, context=context)
@@ -59,6 +62,7 @@ class ProductDetailRenderer(BrowsableAPIRenderer):
 
 class ProductDetailView(APIView):
 
+    permission_classes = [IsAdminOrReadOnly]
     renderer_classes = [JSONRenderer, ProductDetailRenderer]
 
     def get(self, request, product_pk):
@@ -94,6 +98,7 @@ class ProductDetailView(APIView):
 
 
 class ProductSpecificDetailView(APIView):
+    permission_classes = [IsAdminOrReadOnly]
     serializer_class = ProductSpecificDetailSerializer
 
     def get(self, request, product_pk, product_specific_pk):
