@@ -1,18 +1,30 @@
-from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import ProductSpecificDetailSerializer, ProductSpecificListSerializer, ProductSerializer
 from products.models import Product
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework import status,permissions, authentication
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
-from rest_framework import permissions
 from api.permissions import IsAdminOrReadOnly
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 # Create your views here.
 
+class AdminObtainAuthToken(ObtainAuthToken):
+
+    #Create auth token for admin user
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        if user is not None and user.is_staff:
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key},status=status.HTTP_200_OK)
+        return Response({'detail': 'You dont have permission to obtain token'}, status=status.HTTP_403_FORBIDDEN)
 
 class ProductListView(APIView):
     serializer_class = ProductSerializer
+    authentication_classes = [authentication.SessionAuthentication, authentication.TokenAuthentication]
     permission_classes = [IsAdminOrReadOnly]
 
     def get(self, request):
@@ -61,7 +73,7 @@ class ProductDetailRenderer(BrowsableAPIRenderer):
 
 
 class ProductDetailView(APIView):
-
+    authentication_classes = [authentication.SessionAuthentication, authentication.TokenAuthentication]
     permission_classes = [IsAdminOrReadOnly]
     renderer_classes = [JSONRenderer, ProductDetailRenderer]
 
@@ -98,6 +110,7 @@ class ProductDetailView(APIView):
 
 
 class ProductSpecificDetailView(APIView):
+    authentication_classes = [authentication.SessionAuthentication, authentication.TokenAuthentication]
     permission_classes = [IsAdminOrReadOnly]
     serializer_class = ProductSpecificDetailSerializer
 
